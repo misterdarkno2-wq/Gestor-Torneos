@@ -12,6 +12,9 @@ def transaction():
     if config['DB_SSL_CA']:
         options.update(ssl_ca=config['DB_SSL_CA'], ssl_verify_cert=True,
                        ssl_verify_identity=True)
+    else:
+        # Compatible con servidores de desarrollo que no utilizan TLS.
+        options['ssl_disabled'] = True
     connection = pymysql.connect(
         host=config['DB_HOST'], user=config['DB_USER'],
         password=config['DB_PASSWORD'], database=config['DB_NAME'],

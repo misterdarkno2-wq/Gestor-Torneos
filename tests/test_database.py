@@ -47,6 +47,17 @@ def test_connection_rolls_back_and_closes_on_failure(app, monkeypatch):
     connection.commit.assert_not_called()
 
 
+def test_connection_without_certificate_disables_tls(app, monkeypatch):
+    connect = Mock(return_value=MagicMock())
+    monkeypatch.setattr('app.database.connection.pymysql.connect', connect)
+    with app.app_context():
+        app.config['DB_SSL_CA'] = ''
+        with transaction():
+            pass
+    assert connect.call_args.kwargs['ssl_disabled'] is True
+    assert 'ssl_ca' not in connect.call_args.kwargs
+
+
 def test_password_creation_uses_hash_and_bound_values(monkeypatch):
     write = Mock(return_value=(1, 1))
     monkeypatch.setattr(usuario, 'execute', write)

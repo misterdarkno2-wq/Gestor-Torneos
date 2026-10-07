@@ -25,7 +25,7 @@ def init_db():
                 cursor.execute('INSERT INTO torneos (slug, nombre) VALUES (%s,%s) '
                                'ON DUPLICATE KEY UPDATE nombre=VALUES(nombre)', (slug, name))
     except pymysql.MySQLError as exc:
-        raise click.ClickException('No se pudo inicializar MySQL. Revisa .env, permisos y certificado TLS.') from exc
+        raise click.ClickException('No se pudo inicializar MySQL. Revisa .env, acceso al servidor y permisos.') from exc
     click.echo('Tablas y tres torneos inicializados. Los datos existentes se conservaron.')
 
 

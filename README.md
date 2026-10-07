@@ -61,9 +61,11 @@ Pega el resultado en `SECRET_KEY`. No reemplaces una clave existente si quieres 
 
 ## 2. Preparar tu MySQL remoto
 
-Pide al administrador/proveedor una base **dedicada** MySQL 8.0 o superior, acceso desde la IP de este equipo y el certificado CA del servidor. El puerto MySQL no necesita estar abierto a todo Internet. No hay credenciales del servidor remoto en esta carpeta.
+Pide al administrador/proveedor una base **dedicada** MySQL 8.0 o superior y acceso desde la IP de este equipo. Si el servidor usa TLS, solicita el certificado CA. En desarrollo también se admiten servidores sin TLS dejando `DB_SSL_CA` vacío. No hay credenciales del servidor remoto en esta carpeta.
 
 El administrador puede ejecutar lo siguiente en MySQL, reemplazando la IP de origen y la contraseña. La contraseña es un marcador y debe cambiarse antes de ejecutar:
+
+Este ejemplo utiliza TLS. Para un servidor de desarrollo sin TLS, omite `REQUIRE SSL` en las instrucciones `CREATE USER`.
 
 ```sql
 CREATE DATABASE IF NOT EXISTS gestor_torneos
@@ -98,7 +100,7 @@ TRUSTED_HOSTS=localhost,127.0.0.1
 PORT=5000
 ```
 
-`DB_HOST` debe coincidir con el nombre del certificado. PyMySQL verifica tanto la CA como la identidad del servidor. La aplicación exige `DB_SSL_CA` para hosts remotos. Usa rutas Windows con `/`. Si una contraseña contiene `#` o espacios, escríbela entre comillas en `.env`.
+Cuando `DB_SSL_CA` contiene una ruta, PyMySQL verifica tanto la CA como la identidad del servidor y `DB_HOST` debe coincidir con el nombre del certificado. En desarrollo puedes dejar `DB_SSL_CA=` para conectar a un servidor sin TLS. La aplicación exige certificado para MySQL remoto cuando `APP_ENV=production`. Usa rutas Windows con `/`. Si una contraseña contiene `#` o espacios, escríbela entre comillas en `.env`.
 
 Inicializa las tablas (no borra datos; MySQL hace commit implícito al ejecutar DDL):
 
@@ -187,7 +189,7 @@ Los registros antiguos no tienen usuario: los importados se asocian a la cuenta 
 
 ## Verificación
 
-Resultado de esta entrega: **40 pruebas aprobadas y 1 prueba MySQL omitida por falta de conexión configurada**. El detalle y sus límites están en `VERIFICACION.md`.
+La verificación inicial aprobó **40 pruebas**, incluidas las de navegador. Tras habilitar servidores de desarrollo sin TLS, se aprobaron **35 pruebas de backend**; las 7 pruebas de navegador y la prueba MySQL quedaron omitidas en esa ejecución. El detalle y sus límites están en `VERIFICACION.md`.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
@@ -212,4 +214,4 @@ $env:RUN_MYSQL_TESTS="1"
 .\.venv\Scripts\python.exe -m pytest tests/test_mysql_integration.py -q
 ```
 
-La integración con el servidor remoto queda pendiente hasta configurar credenciales y certificado reales. No se ejecutaron migraciones ni se modificó ningún servidor remoto durante esta entrega.
+La integración con el servidor remoto queda pendiente hasta que sea accesible y sus credenciales estén configuradas. El certificado sólo se configura si se utiliza TLS; es obligatorio para conexiones remotas en producción. No se ejecutaron migraciones ni se modificó ningún servidor remoto durante esta entrega.

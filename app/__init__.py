@@ -15,7 +15,9 @@ def create_app(test_config=None):
         raise RuntimeError('Configura una SECRET_KEY aleatoria de al menos 32 caracteres en .env.')
     if app.config['APP_ENV'] == 'production' and not app.config['SESSION_COOKIE_SECURE']:
         raise RuntimeError('En producción debes usar HTTPS y COOKIE_SECURE=true.')
-    if app.config['DB_HOST'] not in ('localhost', '127.0.0.1', '::1') and not app.config['DB_SSL_CA']:
+    if (app.config['APP_ENV'] == 'production'
+            and app.config['DB_HOST'] not in ('localhost', '127.0.0.1', '::1')
+            and not app.config['DB_SSL_CA']):
         raise RuntimeError('Para MySQL remoto configura DB_SSL_CA con el certificado CA del proveedor.')
 
     from app.cli import register_cli

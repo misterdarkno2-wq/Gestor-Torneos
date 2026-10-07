@@ -103,9 +103,16 @@ def test_registration_validation_rejects_invalid_input(value):
         clean_text(value, 'Equipo', 60)
 
 
-def test_remote_mysql_requires_tls():
+def test_remote_mysql_requires_tls_in_production():
     with pytest.raises(RuntimeError, match='DB_SSL_CA'):
-        create_app({'SECRET_KEY': 'x' * 64, 'DB_HOST': 'db.example.org', 'DB_SSL_CA': ''})
+        create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'production',
+                    'SESSION_COOKIE_SECURE': True, 'DB_HOST': 'db.example.org', 'DB_SSL_CA': ''})
+
+
+def test_remote_mysql_without_certificate_is_allowed_in_development():
+    app = create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'development',
+                      'DB_HOST': 'db.example.org', 'DB_SSL_CA': ''})
+    assert app.config['DB_SSL_CA'] == ''
 
 
 def test_headers_and_missing_paths(client):
