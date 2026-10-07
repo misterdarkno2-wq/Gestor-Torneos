@@ -2,9 +2,11 @@
 
 Fecha: 7 de octubre de 2026.
 
-**Resultado: 40 pruebas aprobadas; 1 prueba de integración MySQL omitida.**
+**Resultado actual: 45 pruebas aprobadas; 1 prueba de integración MySQL omitida.**
 
-Actualización: se permite `DB_SSL_CA=` en desarrollo para servidores sin TLS. Las 35 pruebas de backend pasan, incluidas las dos regresiones nuevas para esta configuración. En esta ejecución se omitieron las 7 pruebas de navegador ya verificadas y la prueba de MySQL real.
+Se permite `DB_SSL_CA=` en desarrollo para servidores sin TLS. La última ejecución aprobó 35 pruebas de backend, 7 de navegador de la aplicación Flask y 3 de la exportación a GitHub Pages. La prueba de MySQL real sigue pendiente.
+
+GitHub Pages utiliza exclusivamente `docs/`: 11 páginas con datos ficticios, sin campos de contraseña y con formularios de inscripción deshabilitados. La navegación se comprobó bajo el prefijo `/Gestor-Torneos/` a 320, 768 y 1440 píxeles. Todos los enlaces locales y recursos referenciados existen; no se enviaron peticiones POST durante las pruebas de la vista pública.
 
 Se ejecutaron las pruebas de seguridad y reglas de negocio con dobles de conexión y datos simulados, y las pruebas de navegador en Google Chrome a 320, 375, 768, 1024, 1440 y 1920 píxeles. Las capturas en `test-results/` corresponden a datos ficticios, no a cuentas reales.
 

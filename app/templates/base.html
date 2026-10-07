@@ -5,9 +5,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6355d8">
+  {% if pages_preview %}<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">{% endif %}
   <title>{% block title %}Gestor de Torneos{% endblock %} · Torneo</title>
   <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% if pages_preview %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">{% endif %}
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -25,16 +27,17 @@
   </nav>
   <div class="sidebar-bottom"><div class="sidebar-note">{{ icon('trophy') }}<strong>El deporte nos conecta.</strong><p>Un espacio para competir,<br>compartir y crecer juntos.</p></div>
     <div class="sidebar-profile"><span class="avatar">{{ user.nombre[:1]|upper }}</span><div><strong>{{ user.nombre }}</strong><small>{{ user.rol|capitalize }}</small></div></div>
-    <form action="{{ url_for('auth.logout') }}" method="post">{{ csrf_field() }}<button class="nav-item logout" type="submit">{{ icon('logout') }} Cerrar sesión</button></form>
+    {% if pages_preview %}<a class="nav-item logout" href="{{ url_for('auth.login') }}">{{ icon('logout') }} Volver a portada</a>{% else %}<form action="{{ url_for('auth.logout') }}" method="post">{{ csrf_field() }}<button class="nav-item logout" type="submit">{{ icon('logout') }} Cerrar sesión</button></form>{% endif %}
   </div>
 </aside>
 <div class="app-shell">
-  <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">{{ icon('menu') }}</button><span class="breadcrumb">Mi espacio <span>/</span> <strong>{{ sports[active].label if active in sports else 'Resumen' }}</strong></span></div><div class="topbar-profile"><span class="role-badge">{{ user.rol|capitalize }}</span><span class="avatar small">{{ user.nombre[:1]|upper }}</span><span class="profile-name">{{ user.nombre }}</span><form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}<button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión">{{ icon('logout') }}</button></form></div></header>
+  <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">{{ icon('menu') }}</button><span class="breadcrumb">Mi espacio <span>/</span> <strong>{{ sports[active].label if active in sports else 'Resumen' }}</strong></span></div><div class="topbar-profile"><span class="role-badge">{{ user.rol|capitalize }}</span><span class="avatar small">{{ user.nombre[:1]|upper }}</span><span class="profile-name">{{ user.nombre }}</span>{% if pages_preview %}<a class="icon-button" href="{{ url_for('auth.login') }}" aria-label="Volver a portada">{{ icon('logout') }}</a>{% else %}<form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}<button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión">{{ icon('logout') }}</button></form>{% endif %}</div></header>
   <main class="content" id="main" tabindex="-1">
 {% else %}<main id="main" tabindex="-1" class="public-main">{% endif %}
   <div class="toast-region" aria-live="polite" aria-atomic="true">
     {% for category, message in get_flashed_messages(with_categories=true) %}<div class="toast {{ category }}" role="status">{{ icon('check' if category == 'success' else 'info') }}<span>{{ message }}</span><button type="button" class="icon-button toast-close" aria-label="Cerrar aviso">{{ icon('close') }}</button></div>{% endfor %}
   </div>
+  {% if pages_preview %}<div class="pages-preview-note" role="note"><strong>Vista de ejemplo</strong><span>Datos ficticios. Las inscripciones y el acceso real requieren la aplicación con servidor.</span></div>{% endif %}
   {% block content %}{% endblock %}
   {% if user %}<footer class="footer"><span>Torneo · Gestor de torneos internos</span><span>Hecho para tu comunidad escolar</span></footer>{% endif %}
   </main>

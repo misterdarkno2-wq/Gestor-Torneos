@@ -1,0 +1,121 @@
+'use strict';
+
+// Contenido aportado por usuarios se representa con textContent, nunca innerHTML.
+const menuToggle = document.querySelector('.menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.querySelector('.sidebar-overlay');
+const sidebarClose = document.querySelector('.sidebar-close');
+let previousFocus;
+
+function setMenu(open) {
+  if (!sidebar || !menuToggle) return;
+  sidebar.classList.toggle('open', open);
+  const mobile = !matchMedia('(min-width: 900px)').matches;
+  sidebar.inert = mobile && !open;
+  sidebar.setAttribute('aria-hidden', String(mobile && !open));
+  menuToggle.setAttribute('aria-expanded', String(open));
+  overlay.hidden = !open;
+  document.body.style.overflow = open ? 'hidden' : '';
+  if (open) {
+    previousFocus = document.activeElement;
+    sidebarClose.focus();
+  } else if (previousFocus) previousFocus.focus();
+}
+menuToggle?.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
+sidebarClose?.addEventListener('click', () => setMenu(false));
+overlay?.addEventListener('click', () => setMenu(false));
+document.addEventListener('keydown', event => {
+  if (!sidebar?.classList.contains('open')) return;
+  if (event.key === 'Escape') setMenu(false);
+  if (event.key === 'Tab') {
+    const links = [...sidebar.querySelectorAll('a, button')].filter(el => el.getClientRects().length);
+    const first = links[0], last = links[links.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+});
+matchMedia('(min-width: 900px)').addEventListener('change', event => {
+  setMenu(false);
+});
+setMenu(false);
+
+document.querySelector('.password-toggle')?.addEventListener('click', event => {
+  const button = event.currentTarget;
+  const field = document.getElementById('contrasena');
+  const showing = field.type === 'password';
+  field.type = showing ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(showing));
+  button.setAttribute('aria-label', showing ? 'Ocultar contraseña' : 'Mostrar contraseña');
+});
+
+document.querySelectorAll('.toast-close').forEach(button => {
+  button.addEventListener('click', () => button.closest('.toast').remove());
+});
+document.querySelectorAll('[data-edit]').forEach(button => {
+  button.addEventListener('click', () => {
+    const form = document.getElementById(button.dataset.edit);
+    form.hidden = !form.hidden;
+    button.setAttribute('aria-expanded', String(!form.hidden));
+    if (!form.hidden) form.querySelector('input:not([type=hidden])').focus();
+  });
+});
+
+const search = document.getElementById('tournament-search');
+const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+search?.addEventListener('input', () => {
+  const cards = [...document.querySelectorAll('[data-search]')];
+  cards.forEach(card => { card.hidden = !normalize(card.dataset.search).includes(normalize(search.value.trim())); });
+  document.querySelector('.empty-search').hidden = cards.some(card => !card.hidden);
+});
+
+const dialog = document.getElementById('confirm-dialog');
+let pendingForm = null;
+let pendingSubmitter = null;
+dialog?.querySelector('[data-cancel]').addEventListener('click', () => dialog.close());
+dialog?.addEventListener('close', () => { pendingForm = null; pendingSubmitter = null; });
+dialog?.querySelector('[data-confirm]').addEventListener('click', () => {
+  const form = pendingForm;
+  const submitter = pendingSubmitter;
+  dialog.close();
+  if (form) {
+    form.dataset.confirmed = 'true';
+    form.requestSubmit(submitter || undefined);
+  }
+});
+
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', event => {
+    if (form.classList.contains('loading')) { event.preventDefault(); return; }
+    const teams = [...form.querySelectorAll('input[name=equipos]')];
+    if (teams.length && teams.filter(input => input.checked).length !== 4) {
+      event.preventDefault();
+      teams[0].setCustomValidity('Selecciona exactamente cuatro equipos.');
+      teams[0].reportValidity();
+      return;
+    }
+    if (form.dataset.confirm && form.dataset.confirmed !== 'true') {
+      event.preventDefault();
+      pendingForm = form;
+      pendingSubmitter = event.submitter;
+      document.getElementById('confirm-message').textContent = form.dataset.confirm;
+      dialog.showModal();
+      dialog.querySelector('[data-cancel]').focus();
+      return;
+    }
+    form.classList.add('loading');
+    form.setAttribute('aria-busy', 'true');
+    // Se difiere el bloqueo para conservar los valores enviados del formulario.
+    setTimeout(() => form.querySelectorAll('button[type=submit]').forEach(button => { button.disabled = true; }), 0);
+  });
+  form.querySelectorAll('input[name=equipos]').forEach(input => {
+    input.addEventListener('change', () => form.querySelector('input[name=equipos]').setCustomValidity(''));
+  });
+});
+window.addEventListener('pageshow', () => {
+  document.querySelectorAll('form.loading').forEach(form => {
+    form.classList.remove('loading');
+    form.removeAttribute('aria-busy');
+    delete form.dataset.confirmed;
+    form.querySelectorAll('button[type=submit]').forEach(button => { button.disabled = false; });
+  });
+});

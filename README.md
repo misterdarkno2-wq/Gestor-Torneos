@@ -2,6 +2,25 @@
 
 Aplicación Flask para torneos escolares de **fútbol, básquetbol y voleibol**, con cuentas de profesor y estudiante, MySQL mediante PyMySQL y una interfaz responsive.
 
+## Sitio público en GitHub Pages
+
+Dirección: **https://misterdarkno2-wq.github.io/Gestor-Torneos/**.
+
+GitHub Pages publica la carpeta `docs/` de la rama `main`. Esta versión permite explorar los paneles y torneos con **datos ficticios**. No solicita contraseñas y mantiene los formularios de inscripción deshabilitados. La navegación, el menú móvil y la búsqueda sí funcionan.
+
+Pages sirve archivos estáticos y no ejecuta Flask ni conecta con MySQL. Para utilizar login, inscripciones y resultados reales, ejecuta la aplicación con servidor siguiendo las instrucciones de este documento. Consulta la [documentación de GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
+
+Para actualizar la versión pública después de cambiar plantillas o estilos:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/build_pages.py
+git add docs app scripts
+git commit -m "Actualizar sitio público"
+git push origin main
+```
+
+La exportación sólo copia los recursos públicos y renderiza datos de ejemplo; no lee `.env` ni consulta la base de datos. GitHub Pages vuelve a publicar al subir cambios en `docs/`.
+
 ## Diagnóstico del proyecto original
 
 La carpeta recibida no contenía Python, Flask, Django ni una base de datos: eran once archivos HTML, dos scripts y una hoja CSS. El login comparaba credenciales públicas (`profesor` / `estudiante`) en JavaScript, no creaba sesiones ni protegía páginas. Los estudiantes guardaban inscripciones en `localStorage`; los formularios del profesor sólo abrían una confirmación y las llaves eran ejemplos estáticos. La misma presentación se repetía en cada HTML.
@@ -189,7 +208,7 @@ Los registros antiguos no tienen usuario: los importados se asocian a la cuenta 
 
 ## Verificación
 
-La verificación inicial aprobó **40 pruebas**, incluidas las de navegador. Tras habilitar servidores de desarrollo sin TLS, se aprobaron **35 pruebas de backend**; las 7 pruebas de navegador y la prueba MySQL quedaron omitidas en esa ejecución. El detalle y sus límites están en `VERIFICACION.md`.
+La última verificación aprobó **45 pruebas**, incluidas las de navegador y la exportación a GitHub Pages. La prueba de MySQL real sigue omitida por falta de acceso al servidor. El detalle y sus límites están en `VERIFICACION.md`.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt

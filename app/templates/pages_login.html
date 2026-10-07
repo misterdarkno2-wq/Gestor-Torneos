@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon, court %}
+{% block title %}Deporte escolar{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-story" aria-label="Torneo, deporte escolar"><a class="brand" href="index.html"><span class="brand-mark">{{ icon('trophy') }}</span><span>torneo<span class="brand-dot">.</span><small>DEPORTE ESCOLAR</small></span></a>
+    <div class="story-copy"><span class="eyebrow light">EL TALENTO EMPIEZA AQUÍ</span><h1>Grandes momentos.<br><span>Un mismo equipo.</span></h1><p>Organiza tus torneos, acompaña a tus equipos y vive cada competencia en un solo lugar.</p><div class="story-sports"><span>{{ icon('football') }} Fútbol</span><span>{{ icon('basketball') }} Básquetbol</span><span>{{ icon('volleyball') }} Voleibol</span></div></div>
+    <div class="story-court">{{ court('basketball') }}<span class="floating-ball">{{ icon('basketball') }}</span><span class="court-caption">DONDE EL JUEGO SE CONVIERTE EN COMUNIDAD</span></div>
+    <p class="story-footer">Gestor de Torneos Internos · Tu comunidad escolar</p>
+  </section>
+  <section class="login-side"><div class="login-card"><span class="login-logo brand-mark">{{ icon('trophy') }}</span><span class="eyebrow">BIENVENIDO A TORNEO</span><h2>Tu próximo encuentro<br>empieza aquí.</h2><p class="muted">Explora la interfaz de nuestra comunidad deportiva.</p>
+    <div class="form-stack"><a href="dashboard-profesor.html" class="button primary login-submit">Ver panel del profesor {{ icon('arrow') }}</a><a href="dashboard-estudiante.html" class="button secondary login-submit">Ver panel del estudiante {{ icon('arrow') }}</a></div>
+    <p class="login-help">Esta es una vista pública con datos de ejemplo.<br>Para inscribirte, utiliza la aplicación del establecimiento.</p><div class="login-secure">{{ icon('trophy') }} Fútbol · Básquetbol · Voleibol</div>
+  </div><p class="login-copyright">Torneo · Deporte que nos une</p></section>
+</div>
+{% endblock %}
