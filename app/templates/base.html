@@ -1,0 +1,44 @@
+{% from 'macros.html' import icon, csrf_field %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6355d8">
+  <title>{% block title %}Gestor de Torneos{% endblock %} · Torneo</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main">Saltar al contenido</a>
+{% if user %}
+<button class="sidebar-overlay" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
+<aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+  <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark">{{ icon('trophy') }}</span><span>torneo<span class="brand-dot">.</span><small>DEPORTE ESCOLAR</small></span></a>
+  <button type="button" class="icon-button sidebar-close" aria-label="Cerrar menú">{{ icon('close') }}</button>
+  <p class="nav-label">ESPACIO DE TRABAJO</p>
+  <nav>
+    <a class="nav-item {{ 'active' if active == 'dashboard' }}" {% if active == 'dashboard' %}aria-current="page"{% endif %} href="{{ url_for('main.dashboard') }}">{{ icon('dashboard') }} Resumen</a>
+    <p class="nav-label">TORNEOS</p>
+    {% for slug, sport in sports.items() %}<a class="nav-item {{ 'active' if active == slug }}" {% if active == slug %}aria-current="page"{% endif %} href="{{ url_for('main.tournament', slug=slug) }}">{{ icon(sport.icon) }} {{ sport.label }}</a>{% endfor %}
+  </nav>
+  <div class="sidebar-bottom"><div class="sidebar-note">{{ icon('trophy') }}<strong>El deporte nos conecta.</strong><p>Un espacio para competir,<br>compartir y crecer juntos.</p></div>
+    <div class="sidebar-profile"><span class="avatar">{{ user.nombre[:1]|upper }}</span><div><strong>{{ user.nombre }}</strong><small>{{ user.rol|capitalize }}</small></div></div>
+    <form action="{{ url_for('auth.logout') }}" method="post">{{ csrf_field() }}<button class="nav-item logout" type="submit">{{ icon('logout') }} Cerrar sesión</button></form>
+  </div>
+</aside>
+<div class="app-shell">
+  <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">{{ icon('menu') }}</button><span class="breadcrumb">Mi espacio <span>/</span> <strong>{{ sports[active].label if active in sports else 'Resumen' }}</strong></span></div><div class="topbar-profile"><span class="role-badge">{{ user.rol|capitalize }}</span><span class="avatar small">{{ user.nombre[:1]|upper }}</span><span class="profile-name">{{ user.nombre }}</span><form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}<button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión">{{ icon('logout') }}</button></form></div></header>
+  <main class="content" id="main" tabindex="-1">
+{% else %}<main id="main" tabindex="-1" class="public-main">{% endif %}
+  <div class="toast-region" aria-live="polite" aria-atomic="true">
+    {% for category, message in get_flashed_messages(with_categories=true) %}<div class="toast {{ category }}" role="status">{{ icon('check' if category == 'success' else 'info') }}<span>{{ message }}</span><button type="button" class="icon-button toast-close" aria-label="Cerrar aviso">{{ icon('close') }}</button></div>{% endfor %}
+  </div>
+  {% block content %}{% endblock %}
+  {% if user %}<footer class="footer"><span>Torneo · Gestor de torneos internos</span><span>Hecho para tu comunidad escolar</span></footer>{% endif %}
+  </main>
+{% if user %}</div>{% endif %}
+<dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title"><div class="dialog-icon">{{ icon('info') }}</div><h2 id="confirm-title">Confirmar acción</h2><p id="confirm-message"></p><div class="button-row"><button type="button" class="button secondary" data-cancel>Cancelar</button><button type="button" class="button danger" data-confirm>Confirmar</button></div></dialog>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon %}
+{% block title %}Inscripción confirmada{% endblock %}
+{% block content %}<section class="panel confirmation-card"><span class="confirmation-icon">{{ icon('check') }}</span><span class="eyebrow">YA ERES PARTE DEL JUEGO</span><h1>¡Inscripción confirmada!</h1><p>{{ confirmation.message }}</p><div class="button-row"><a class="button primary" href="{{ url_for('main.tournament', slug=confirmation.slug, _anchor='equipos') }}">Ver mi torneo {{ icon('arrow') }}</a><a class="button secondary" href="{{ url_for('main.dashboard') }}">Volver al resumen</a></div></section>{% endblock %}

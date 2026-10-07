@@ -1,0 +1,35 @@
+{% macro icon(name, class='') -%}
+<svg class="icon {{ class }}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if name == 'trophy' %}<path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
+{% elif name == 'dashboard' %}<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>
+{% elif name == 'users' %}<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
+{% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>
+{% elif name == 'logout' %}<path d="M9 4H4v16h5m6-12 4 4-4 4m-7-4h11"/>
+{% elif name == 'lock' %}<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>
+{% elif name == 'eye' %}<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>
+{% elif name == 'arrow' %}<path d="M5 12h14m-5-5 5 5-5 5"/>
+{% elif name == 'check' %}<path d="m5 12 4 4L19 6"/>
+{% elif name == 'menu' %}<path d="M4 6h16M4 12h16M4 18h16"/>
+{% elif name == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>
+{% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{% elif name == 'trash' %}<path d="M3 6h18M8 6V3h8v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>
+{% elif name == 'edit' %}<path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14z"/>
+{% elif name == 'close' %}<path d="m6 6 12 12M6 18 18 6"/>
+{% elif name == 'bracket' %}<path d="M3 4h5v6H3m5-3h5v10H8m-5 3h5v-6H3m10-2h8"/>
+{% elif name == 'info' %}<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
+{% elif name == 'football' %}<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
+{% elif name == 'basketball' %}<circle cx="12" cy="12" r="9"/><path d="m6 5 13 13M3 12h18M12 3v18M5 6c6 0 13 7 13 13"/>
+{% elif name == 'volleyball' %}<circle cx="12" cy="12" r="9"/><path d="m12 12 8-4m-8 4-1 9m1-9L5 6m7-3c-1 3-1 6 0 9m8 6c-3-2-6-4-8-6M3 14c3 0 6-1 9-2"/>
+{% endif %}</svg>
+{%- endmacro %}
+
+{% macro csrf_field() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro court(slug) %}
+<svg class="court" viewBox="0 0 360 180" fill="none" aria-hidden="true">
+<rect x="24" y="22" width="312" height="136" rx="3"/><path d="M180 22v136"/>
+{% if slug == 'futbol' %}<circle cx="180" cy="90" r="28"/><rect x="24" y="50" width="45" height="80"/><rect x="291" y="50" width="45" height="80"/><rect x="24" y="72" width="15" height="36"/><rect x="321" y="72" width="15" height="36"/>
+{% elif slug == 'basketball' %}<circle cx="180" cy="90" r="25"/><path d="M24 42a58 58 0 0 1 0 96m312-96a58 58 0 0 0 0 96"/><rect x="24" y="67" width="50" height="46"/><rect x="286" y="67" width="50" height="46"/><circle cx="74" cy="90" r="20"/><circle cx="286" cy="90" r="20"/>
+{% else %}<path d="M118 22v136m124-136v136M174 17v146m12-146v146"/>{% endif %}
+</svg>
+{% endmacro %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon, csrf_field, court %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-story" aria-label="Torneo, deporte escolar"><a class="brand" href="{{ url_for('auth.login') }}"><span class="brand-mark">{{ icon('trophy') }}</span><span>torneo<span class="brand-dot">.</span><small>DEPORTE ESCOLAR</small></span></a>
+    <div class="story-copy"><span class="eyebrow light">EL TALENTO EMPIEZA AQUÍ</span><h1>Grandes momentos.<br><span>Un mismo equipo.</span></h1><p>Organiza tus torneos, acompaña a tus equipos y vive cada competencia en un solo lugar.</p><div class="story-sports"><span>{{ icon('football') }} Fútbol</span><span>{{ icon('basketball') }} Básquetbol</span><span>{{ icon('volleyball') }} Voleibol</span></div></div>
+    <div class="story-court">{{ court('basketball') }}<span class="floating-ball">{{ icon('basketball') }}</span><span class="court-caption">DONDE EL JUEGO SE CONVIERTE EN COMUNIDAD</span></div>
+    <p class="story-footer">Gestor de Torneos Internos · Tu comunidad escolar</p>
+  </section>
+  <section class="login-side"><div class="login-card"><span class="login-logo brand-mark">{{ icon('trophy') }}</span><span class="eyebrow">BIENVENIDO A TORNEO</span><h2>Tu próximo encuentro<br>empieza aquí.</h2><p class="muted">Ingresa con tu cuenta para continuar.</p>
+    {% if error %}<div class="alert error" role="alert">{{ icon('info') }}<span>{{ error }}</span></div>{% endif %}
+    <form method="post" action="{{ url_for('auth.login') }}" class="form-stack" id="loginForm">{{ csrf_field() }}
+      <div class="field"><label for="usuario">Usuario</label><div class="input-icon">{{ icon('user') }}<input id="usuario" name="usuario" type="text" value="{{ username }}" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" placeholder="Tu nombre de usuario" required></div></div>
+      <div class="field"><label for="contrasena">Contraseña</label><div class="input-icon">{{ icon('lock') }}<input id="contrasena" name="contrasena" type="password" autocomplete="current-password" maxlength="128" placeholder="Ingresa tu contraseña" required><button class="icon-button password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false" aria-controls="contrasena">{{ icon('eye') }}</button></div></div>
+      <label class="checkbox-label"><input type="checkbox" name="recordar"> Recordar sesión por 30 días</label>
+      <button class="button primary login-submit" type="submit">Iniciar sesión {{ icon('arrow') }}</button>
+    </form>
+    <p class="login-help">¿Necesitas una cuenta o recuperar el acceso?<br><strong>Contacta al profesor administrador.</strong></p><div class="login-secure">{{ icon('lock') }} Tu espacio, con acceso seguro</div>
+  </div><p class="login-copyright">Torneo · Deporte que nos une</p></section>
+</div>
+{% endblock %}

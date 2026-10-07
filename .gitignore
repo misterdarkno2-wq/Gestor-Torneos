@@ -1,0 +1,11 @@
+.venv/
+.env
+.env.*
+!.env.example
+!.env.test.example
+legacy-original/
+__pycache__/
+.pytest_cache/
+*.pyc
+instance/
+test-results/
