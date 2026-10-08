@@ -30,10 +30,10 @@ MATCHES = [
 
 
 @pytest.fixture
-def app(monkeypatch):
-    # Dobles exclusivamente en pruebas; la aplicación real sólo utiliza PyMySQL.
+def app(monkeypatch, tmp_path):
+    # Dobles exclusivamente en pruebas; la aplicación real utiliza Supabase.
     app = create_app({'TESTING': True, 'SECRET_KEY': 'test-only-' * 8,
-                      'DB_HOST': '127.0.0.1', 'SESSION_COOKIE_SECURE': False,
+                      'SESSION_STORE': str(tmp_path / 'sessions.sqlite3'), 'SESSION_COOKIE_SECURE': False,
                       'APP_ENV': 'development', 'TRUSTED_HOSTS': ['localhost', '127.0.0.1']})
     monkeypatch.setattr('app.security.session_user', lambda token: USER.copy() if token else None)
     monkeypatch.setattr(torneo, 'list_tournaments', lambda: TOURNAMENTS)

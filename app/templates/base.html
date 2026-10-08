@@ -6,13 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6355d8">
   {% if pages_preview %}<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">{% endif %}
+  {% if pages_live %}<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' {{ supabase_url }}; object-src 'none'; base-uri 'self'; form-action 'self'">{% endif %}
   <title>{% block title %}Gestor de Torneos{% endblock %} · Torneo</title>
   <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% if pages_preview %}<link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}">{% endif %}
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% if pages_live %}<script src="{{ url_for('static', filename='js/pages.bundle.js') }}" defer></script>{% endif %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" {% if pages_live %}data-pages-live data-role="{{ user.rol if user else '' }}" data-slug="{{ active if active in sports else '' }}"{% endif %}>
 <a class="skip-link" href="#main">Saltar al contenido</a>
 {% if user %}
 <button class="sidebar-overlay" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
@@ -38,7 +40,10 @@
     {% for category, message in get_flashed_messages(with_categories=true) %}<div class="toast {{ category }}" role="status">{{ icon('check' if category == 'success' else 'info') }}<span>{{ message }}</span><button type="button" class="icon-button toast-close" aria-label="Cerrar aviso">{{ icon('close') }}</button></div>{% endfor %}
   </div>
   {% if pages_preview %}<div class="pages-preview-note" role="note"><strong>Vista de ejemplo</strong><span>Datos ficticios. Las inscripciones y el acceso real requieren la aplicación con servidor.</span></div>{% endif %}
+  {% if pages_live %}<div id="connection-status" role="status" class="inline-note">{{ icon('info') }}<span>Conectando con tu espacio…</span></div>{% endif %}
+  <div id="page-content" {% if pages_live and user %}hidden{% endif %}>
   {% block content %}{% endblock %}
+  </div>
   {% if user %}<footer class="footer"><span>Torneo · Gestor de torneos internos</span><span>Hecho para tu comunidad escolar</span></footer>{% endif %}
   </main>
 {% if user %}</div>{% endif %}

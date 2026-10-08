@@ -43,7 +43,7 @@ def test_responsive_login_dashboard_and_tournament(browser, browser_url, width):
     out = Path('test-results')
     out.mkdir(exist_ok=True)
     page.goto(browser_url + '/login')
-    page.locator('#usuario').fill('profesor')
+    page.locator('#usuario').fill('profesor@example.test')
     page.locator('#contrasena').fill('secure test password')
     page.get_by_role('button', name='Mostrar contraseña').click()
     assert page.locator('#contrasena').get_attribute('type') == 'text'
@@ -88,7 +88,7 @@ def test_student_menu_and_result_permissions_in_browser(browser, browser_url, mo
     monkeypatch.setattr('app.security.session_user', lambda token: STUDENT if token else None)
     page = browser.new_page(viewport={'width': 375, 'height': 850})
     page.goto(browser_url + '/login')
-    page.locator('#usuario').fill('estudiante')
+    page.locator('#usuario').fill('estudiante@example.test')
     page.locator('#contrasena').fill('secure test password')
     page.get_by_role('button', name='Iniciar sesión').click()
     page.wait_for_url('**/dashboard')

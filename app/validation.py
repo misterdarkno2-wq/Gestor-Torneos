@@ -16,3 +16,10 @@ def clean_username(value):
     if not re.fullmatch(r'[a-z0-9_.-]{3,30}', value):
         raise ValueError('El usuario debe tener entre 3 y 30 letras, números, puntos, guiones o guiones bajos.')
     return value
+
+
+def clean_email(value):
+    value = value.strip().lower()
+    if len(value) > 254 or not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value):
+        raise ValueError('Introduce un correo electrónico válido.')
+    return value

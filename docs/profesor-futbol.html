@@ -5,14 +5,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6355d8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://mbpbukoqmsgzyilhnfay.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Fútbol · Torneo</title>
   <link rel="icon" href="static/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="static/css/app.css">
-  <link rel="stylesheet" href="static/css/pages.css">
+
   <script src="static/js/app.js" defer></script>
+  <script src="static/js/pages.bundle.js" defer></script>
 </head>
-<body class="">
+<body class="" data-pages-live data-role="profesor" data-slug="futbol">
 <a class="skip-link" href="#main">Saltar al contenido</a>
 
 <button class="sidebar-overlay" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
@@ -40,29 +42,33 @@
   <div class="sidebar-bottom"><div class="sidebar-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
 </svg><strong>El deporte nos conecta.</strong><p>Un espacio para competir,<br>compartir y crecer juntos.</p></div>
-    <div class="sidebar-profile"><span class="avatar">P</span><div><strong>Profesor Demo</strong><small>Profesor</small></div></div>
-    <a class="nav-item logout" href="index.html"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <div class="sidebar-profile"><span class="avatar">C</span><div><strong>Cuenta</strong><small>Profesor</small></div></div>
+    <form action="index.html" method="post"><input type="hidden" name="csrf_token" value=""><button class="nav-item logout" type="submit"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M9 4H4v16h5m6-12 4 4-4 4m-7-4h11"/>
-</svg> Volver a portada</a>
+</svg> Cerrar sesión</button></form>
   </div>
 </aside>
 <div class="app-shell">
   <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M4 6h16M4 12h16M4 18h16"/>
-</svg></button><span class="breadcrumb">Mi espacio <span>/</span> <strong>Fútbol</strong></span></div><div class="topbar-profile"><span class="role-badge">Profesor</span><span class="avatar small">P</span><span class="profile-name">Profesor Demo</span><a class="icon-button" href="index.html" aria-label="Volver a portada"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg></button><span class="breadcrumb">Mi espacio <span>/</span> <strong>Fútbol</strong></span></div><div class="topbar-profile"><span class="role-badge">Profesor</span><span class="avatar small">C</span><span class="profile-name">Cuenta</span><form method="post" action="index.html"><input type="hidden" name="csrf_token" value=""><button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M9 4H4v16h5m6-12 4 4-4 4m-7-4h11"/>
-</svg></a></div></header>
+</svg></button></form></div></header>
   <main class="content" id="main" tabindex="-1">
 
   <div class="toast-region" aria-live="polite" aria-atomic="true">
-    
+
   </div>
-  <div class="pages-preview-note" role="note"><strong>Vista de ejemplo</strong><span>Datos ficticios. Las inscripciones y el acceso real requieren la aplicación con servidor.</span></div>
-  
+
+  <div id="connection-status" role="status" class="inline-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
+</svg><span>Conectando con tu espacio…</span></div>
+  <div id="page-content" hidden>
+
 <a class="back-link" href="dashboard-profesor.html">← Volver al resumen</a>
 <div class="page-heading"><div><span class="eyebrow">TORNEOS INTERNOS</span><h1><span class="title-sport green"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
-</svg></span>Fútbol</h1><p>Equipos, encuentros y el camino a la final.</p></div><span class="role-badge">4 equipos inscritos</span></div>
+</svg></span>Fútbol</h1><p>Equipos, encuentros y el camino a la final.</p></div><span class="role-badge">0 equipos inscritos</span></div>
 <nav class="page-tabs" aria-label="Secciones del torneo"><a href="#inscripcion"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M12 5v14M5 12h14"/>
 </svg> Inscripción</a><a href="#equipos"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -72,38 +78,32 @@
 </svg> Llaves y resultados</a></nav>
 <div class="tournament-layout"><section class="panel registration-panel" id="inscripcion"><span class="stat-icon green"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
-</svg></span><h2>Suma tu equipo</h2><p class="muted">Vista del formulario. Para inscribir tu equipo, utiliza la aplicación con servidor.</p>
-<form class="form-stack" method="post" action="#"><input type="hidden" name="csrf_token" value=""><div class="field"><label for="nombre">Nombre del equipo o participante</label><input id="nombre" name="nombre" minlength="2" maxlength="60" placeholder="Ej. Los Cóndores" required disabled></div><div class="field"><label for="curso">Curso</label><input id="curso" name="curso" minlength="2" maxlength="20" placeholder="Ej. 3° Medio A" required disabled></div><button class="button primary" type="submit" disabled><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg></span><h2>Suma tu equipo</h2><p class="muted">Registra un equipo o participante. La inscripción se guardará para toda la comunidad.</p>
+<form class="form-stack" method="post" action="#"><input type="hidden" name="csrf_token" value=""><div class="field"><label for="nombre">Nombre del equipo o participante</label><input id="nombre" name="nombre" minlength="2" maxlength="60" placeholder="Ej. Los Cóndores" required ></div><div class="field"><label for="curso">Curso</label><input id="curso" name="curso" minlength="2" maxlength="20" placeholder="Ej. 3° Medio A" required ></div><button class="button primary" type="submit" ><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M12 5v14M5 12h14"/>
 </svg> Confirmar inscripción</button></form>
 <div class="inline-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
 </svg><span>Usa letras, números y espacios en el nombre. El curso también admite ° y guiones.</span></div>
-
+<details class="import-details"><summary>¿Tienes inscripciones del sistema anterior?</summary><p>Importa el archivo JSON exportado de tu navegador. Las inscripciones se asociarán a tu cuenta; los duplicados se omiten. Consulta README para exportarlas.</p><form class="form-stack" method="post" enctype="multipart/form-data" action="#"><input type="hidden" name="csrf_token" value=""><label for="archivo">Archivo de Fútbol (máximo 128 KB)</label><input type="file" id="archivo" name="archivo" accept=".json,application/json" required><button class="button secondary" type="submit">Importar inscripciones</button></form></details>
 </section>
-<section class="panel teams-panel" id="equipos"><div class="section-heading"><div><h2>Equipos inscritos</h2><p>Administra las inscripciones de la comunidad.</p></div><span class="count-badge">4</span></div>
-<div class="team-list"><article class="team-row"><span class="team-avatar">LO</span><div class="team-info"><h3>Los Cóndores</h3><p>3° Medio A</p></div></article><article class="team-row"><span class="team-avatar">AT</span><div class="team-info"><h3>Atlético Escolar</h3><p>2° Medio B<span class="own-tag">Tu inscripción</span></p></div></article><article class="team-row"><span class="team-avatar">LO</span><div class="team-info"><h3>Los Pumas</h3><p>4° Medio A<span class="own-tag">Tu inscripción</span></p></div></article><article class="team-row"><span class="team-avatar">DE</span><div class="team-info"><h3>Deportivo Norte</h3><p>3° Medio B<span class="own-tag">Tu inscripción</span></p></div></article></div>
-
+<section class="panel teams-panel" id="equipos"><div class="section-heading"><div><h2>Equipos inscritos</h2><p>Administra las inscripciones de la comunidad.</p></div><span class="count-badge">0</span></div>
+<div class="empty-state"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
+</svg><h3>La cancha espera a su primer equipo</h3><p>Completa el formulario para comenzar.</p></div>
 </section></div>
 <section class="panel bracket-panel" id="llaves"><div class="section-heading"><div><span class="eyebrow">CAMINO AL TROFEO</span><h2>Llaves de competencia</h2><p>Dos semifinales. Una final. Un equipo campeón.</p></div><svg class="icon section-trophy" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
 </svg></div>
-<div class="bracket-grid"><article class="match-card "><div class="match-heading"><span>Semifinal 1</span><span class="status-pill ">Resuelto</span></div><div class="match-team winner"><span>Los Cóndores</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="m5 12 4 4L19 6"/>
-</svg></div><div class="match-versus">VS</div><div class="match-team "><span>Atlético Escolar</span></div>
-<p class="winner-label"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
-</svg> Los Cóndores</p></article><article class="match-card "><div class="match-heading"><span>Semifinal 2</span><span class="status-pill ">Resuelto</span></div><div class="match-team "><span>Los Pumas</span></div><div class="match-versus">VS</div><div class="match-team winner"><span>Deportivo Norte</span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="m5 12 4 4L19 6"/>
-</svg></div>
-<p class="winner-label"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
-</svg> Deportivo Norte</p></article><article class="match-card final-match"><div class="match-heading"><span>Final</span><span class="status-pill pending">Pendiente</span></div><div class="match-team "><span>Los Cóndores</span></div><div class="match-versus">VS</div><div class="match-team "><span>Deportivo Norte</span></div>
-</article></div>
-
-
+<div class="empty-state"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M3 4h5v6H3m5-3h5v10H8m-5 3h5v-6H3m10-2h8"/>
+</svg><h3>El camino a la final está por comenzar</h3><p>Inscribe equipos y selecciona cuatro para organizar las semifinales.</p></div>
+<details class="bracket-settings" open><summary>Organizar semifinales</summary><p class="muted">Selecciona cuatro equipos. Se enfrentarán en el orden de la lista: 1 vs 2 y 3 vs 4. Puedes conservar más inscripciones fuera de estas llaves.</p><div class="inline-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
+</svg><span>Faltan 4 equipos para organizar las semifinales.</span></div></details>
 </section>
 
+  </div>
   <footer class="footer"><span>Torneo · Gestor de torneos internos</span><span>Hecho para tu comunidad escolar</span></footer>
   </main>
 </div>

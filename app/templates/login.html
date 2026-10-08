@@ -12,9 +12,9 @@
   <section class="login-side"><div class="login-card"><span class="login-logo brand-mark">{{ icon('trophy') }}</span><span class="eyebrow">BIENVENIDO A TORNEO</span><h2>Tu próximo encuentro<br>empieza aquí.</h2><p class="muted">Ingresa con tu cuenta para continuar.</p>
     {% if error %}<div class="alert error" role="alert">{{ icon('info') }}<span>{{ error }}</span></div>{% endif %}
     <form method="post" action="{{ url_for('auth.login') }}" class="form-stack" id="loginForm">{{ csrf_field() }}
-      <div class="field"><label for="usuario">Usuario</label><div class="input-icon">{{ icon('user') }}<input id="usuario" name="usuario" type="text" value="{{ username }}" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" placeholder="Tu nombre de usuario" required></div></div>
+      <div class="field"><label for="usuario">Correo electrónico</label><div class="input-icon">{{ icon('user') }}<input id="usuario" name="usuario" type="email" value="{{ username }}" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254" placeholder="tu.correo@ejemplo.cl" required></div></div>
       <div class="field"><label for="contrasena">Contraseña</label><div class="input-icon">{{ icon('lock') }}<input id="contrasena" name="contrasena" type="password" autocomplete="current-password" maxlength="128" placeholder="Ingresa tu contraseña" required><button class="icon-button password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false" aria-controls="contrasena">{{ icon('eye') }}</button></div></div>
-      <label class="checkbox-label"><input type="checkbox" name="recordar"> Recordar sesión por 30 días</label>
+      <label class="checkbox-label"><input type="checkbox" name="recordar"> Recordar sesión</label>
       <button class="button primary login-submit" type="submit">Iniciar sesión {{ icon('arrow') }}</button>
     </form>
     <p class="login-help">¿Necesitas una cuenta o recuperar el acceso?<br><strong>Contacta al profesor administrador.</strong></p><div class="login-secure">{{ icon('lock') }} Tu espacio, con acceso seguro</div>

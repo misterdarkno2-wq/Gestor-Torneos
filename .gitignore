@@ -9,3 +9,5 @@ __pycache__/
 *.pyc
 instance/
 test-results/
+node_modules/
+supabase/.temp/

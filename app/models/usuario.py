@@ -1,73 +1,81 @@
-import hashlib
-import secrets
-from datetime import datetime, timedelta, timezone
-
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from app.database.connection import execute, fetch_one, transaction
-
-# Se verifica también para usuarios inexistentes para reducir diferencias de tiempo.
-DUMMY_HASH = generate_password_hash(secrets.token_urlsafe(32))
-
-
-def utcnow():
-    return datetime.now(timezone.utc).replace(tzinfo=None)
-
-
-def digest(value):
-    return hashlib.sha256(value.encode()).hexdigest()
+"""Supabase Auth valida las contraseñas, hashes y límites de acceso."""
+import json
+import time
+from datetime import datetime
+from flask import g
+from app.database.connection import SupabaseError, api
+from app.database.sessions import create_session, digest, store
 
 
 def authenticate(username, password, address, remember=False):
-    now = utcnow()
-    # Dos límites persistentes: por usuario y por IP. No confiar en X-Forwarded-For.
-    keys = sorted([digest('user:' + username), digest('ip:' + address)])
-    with transaction() as cursor:
-        for key in keys:
-            cursor.execute('INSERT IGNORE INTO login_attempts '
-                           '(attempt_key, window_started) VALUES (%s, %s)', (key, now))
-        attempts = []
-        for key in keys:
-            cursor.execute('SELECT * FROM login_attempts WHERE attempt_key=%s FOR UPDATE', (key,))
-            attempts.append(cursor.fetchone())
-        if any(a['locked_until'] and a['locked_until'] > now for a in attempts):
-            return None, 'Demasiados intentos. Espera 15 minutos antes de volver a intentar.'
-        cursor.execute('SELECT * FROM usuarios WHERE username=%s', (username,))
-        user = cursor.fetchone()
-        valid = check_password_hash(user['password_hash'] if user else DUMMY_HASH, password)
-        if not valid or not user or not user['activo']:
-            for attempt, limit in zip(attempts, [20 if key == digest('ip:' + address) else 5 for key in keys]):
-                expired = now - attempt['window_started'] >= timedelta(minutes=15)
-                failures = 1 if expired else attempt['failures'] + 1
-                cursor.execute('UPDATE login_attempts SET failures=%s, window_started=%s, '
-                               'locked_until=%s WHERE attempt_key=%s',
-                               (failures, now if expired else attempt['window_started'],
-                                now + timedelta(minutes=15) if failures >= limit else None,
-                                attempt['attempt_key']))
-            return None, 'Usuario o contraseña incorrectos.'
-        cursor.execute('DELETE FROM login_attempts WHERE attempt_key=%s', (digest('user:' + username),))
-        # El límite de IP no se borra al acceder con una cuenta válida.
-        token = secrets.token_urlsafe(48)
-        cursor.execute('INSERT INTO auth_sessions (token_hash, usuario_id, expires_at) '
-                       'VALUES (%s, %s, %s)',
-                       (digest(token), user['id'], now + (timedelta(days=30) if remember else timedelta(hours=12))))
-        return token, None
+    try:
+        data = api('/auth/v1/token?grant_type=password', {'email': username, 'password': password})
+    except SupabaseError as exc:
+        if exc.status == 429:
+            return None, 'Demasiados intentos. Espera unos minutos antes de volver a intentar.'
+        if exc.code == 'email_not_confirmed':
+            return None, 'Confirma tu correo antes de iniciar sesión.'
+        if exc.status in (400, 401, 422):
+            return None, 'Correo o contraseña incorrectos.'
+        raise
+    data['expires_at'] = time.time() + data['expires_in']
+    try:
+        api('/rest/v1/rpc/gt_state', {'p_slug': None}, token=data['access_token'])
+    except SupabaseError as exc:
+        try:
+            api('/auth/v1/logout?scope=local', {}, token=data['access_token'])
+        except SupabaseError:
+            pass
+        if exc.code == 'PT403':
+            return None, exc.public_message
+        raise
+    return create_session(data, remember), None
 
 
 def session_user(token):
     if not token:
         return None
-    return fetch_one('SELECT u.id, u.username, u.nombre, u.rol FROM usuarios u '
-                     'JOIN auth_sessions s ON s.usuario_id=u.id '
-                     'WHERE s.token_hash=%s AND s.expires_at>%s AND u.activo=TRUE',
-                     (digest(token), utcnow()))
+    with store() as db:
+        row = db.execute('SELECT data FROM sessions WHERE id=?', (digest(token),)).fetchone()
+        if not row:
+            return None
+        data = json.loads(row[0])
+    try:
+        if data['expires_at'] <= time.time() + 60:
+            # Sólo la renovación bloquea SQLite durante una llamada remota.
+            # Releer bajo bloqueo: otro trabajador podría haber rotado el token.
+            with store() as db:
+                row = db.execute('SELECT data FROM sessions WHERE id=?', (digest(token),)).fetchone()
+                if not row:
+                    return None
+                data = json.loads(row[0])
+                if data['expires_at'] <= time.time() + 60:
+                    data = api('/auth/v1/token?grant_type=refresh_token', {'refresh_token': data['refresh_token']})
+                    data['expires_at'] = time.time() + data['expires_in']
+                    db.execute('UPDATE sessions SET data=? WHERE id=?', (json.dumps(data), digest(token)))
+        api('/auth/v1/user', token=data['access_token'], method='GET')
+        state = api('/rest/v1/rpc/gt_state', {'p_slug': None}, token=data['access_token'])
+    except SupabaseError as exc:
+        if exc.status in (400, 401, 403, 422):
+            with store() as db:
+                db.execute('DELETE FROM sessions WHERE id=?', (digest(token),))
+            return None
+        raise
+    g.supabase_token = data['access_token']
+    for item in state.get('recent', []):
+        item['created_at'] = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+    g.tournament_states = {None: state}
+    return state['user']
 
 
 def revoke_session(token):
-    if token:
-        execute('DELETE FROM auth_sessions WHERE token_hash=%s', (digest(token),))
-
-
-def create_user(username, nombre, password, rol):
-    return execute('INSERT INTO usuarios (username, nombre, password_hash, rol) VALUES (%s,%s,%s,%s)',
-                   (username, nombre, generate_password_hash(password, method='scrypt'), rol))[0]
+    if not token:
+        return
+    with store() as db:
+        row = db.execute('SELECT data FROM sessions WHERE id=?', (digest(token),)).fetchone()
+        if row:
+            try:
+                api('/auth/v1/logout?scope=local', {}, token=json.loads(row[0])['access_token'])
+            except SupabaseError:
+                pass
+        db.execute('DELETE FROM sessions WHERE id=?', (digest(token),))

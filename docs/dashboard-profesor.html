@@ -5,14 +5,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6355d8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://mbpbukoqmsgzyilhnfay.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Resumen · Torneo</title>
   <link rel="icon" href="static/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="static/css/app.css">
-  <link rel="stylesheet" href="static/css/pages.css">
+
   <script src="static/js/app.js" defer></script>
+  <script src="static/js/pages.bundle.js" defer></script>
 </head>
-<body class="">
+<body class="" data-pages-live data-role="profesor" data-slug="">
 <a class="skip-link" href="#main">Saltar al contenido</a>
 
 <button class="sidebar-overlay" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
@@ -40,26 +42,30 @@
   <div class="sidebar-bottom"><div class="sidebar-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
 </svg><strong>El deporte nos conecta.</strong><p>Un espacio para competir,<br>compartir y crecer juntos.</p></div>
-    <div class="sidebar-profile"><span class="avatar">P</span><div><strong>Profesor Demo</strong><small>Profesor</small></div></div>
-    <a class="nav-item logout" href="index.html"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <div class="sidebar-profile"><span class="avatar">C</span><div><strong>Cuenta</strong><small>Profesor</small></div></div>
+    <form action="index.html" method="post"><input type="hidden" name="csrf_token" value=""><button class="nav-item logout" type="submit"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M9 4H4v16h5m6-12 4 4-4 4m-7-4h11"/>
-</svg> Volver a portada</a>
+</svg> Cerrar sesión</button></form>
   </div>
 </aside>
 <div class="app-shell">
   <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M4 6h16M4 12h16M4 18h16"/>
-</svg></button><span class="breadcrumb">Mi espacio <span>/</span> <strong>Resumen</strong></span></div><div class="topbar-profile"><span class="role-badge">Profesor</span><span class="avatar small">P</span><span class="profile-name">Profesor Demo</span><a class="icon-button" href="index.html" aria-label="Volver a portada"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg></button><span class="breadcrumb">Mi espacio <span>/</span> <strong>Resumen</strong></span></div><div class="topbar-profile"><span class="role-badge">Profesor</span><span class="avatar small">C</span><span class="profile-name">Cuenta</span><form method="post" action="index.html"><input type="hidden" name="csrf_token" value=""><button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M9 4H4v16h5m6-12 4 4-4 4m-7-4h11"/>
-</svg></a></div></header>
+</svg></button></form></div></header>
   <main class="content" id="main" tabindex="-1">
 
   <div class="toast-region" aria-live="polite" aria-atomic="true">
-    
+
   </div>
-  <div class="pages-preview-note" role="note"><strong>Vista de ejemplo</strong><span>Datos ficticios. Las inscripciones y el acceso real requieren la aplicación con servidor.</span></div>
-  
-<div class="page-heading"><div><span class="eyebrow">TU COMUNIDAD, EN JUEGO</span><h1>Hola, Profesor <span class="greeting-dot"></span></h1><p>Todo lo que necesitas para vivir la próxima competencia.</p></div><a class="button secondary" href="profesor-futbol.html#inscripcion"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+
+  <div id="connection-status" role="status" class="inline-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
+</svg><span>Conectando con tu espacio…</span></div>
+  <div id="page-content" hidden>
+
+<div class="page-heading"><div><span class="eyebrow">TU COMUNIDAD, EN JUEGO</span><h1>Hola, Cuenta <span class="greeting-dot"></span></h1><p>Todo lo que necesitas para vivir la próxima competencia.</p></div><a class="button secondary" href="profesor-futbol.html#inscripcion"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M12 5v14M5 12h14"/>
 </svg> Inscribir equipo</a></div>
 <section class="dashboard-hero"><div class="hero-copy"><span class="pill"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -82,13 +88,13 @@
 <section class="stats-grid" aria-label="Estadísticas actuales">
   <article class="stat-card"><span class="stat-icon purple"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M8 3h8v6a4 4 0 0 1-8 0zM8 5H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4v3"/>
-</svg></span><div><span>Torneos disponibles</span><strong>3</strong><small>Tres disciplinas, una comunidad</small></div></article>
+</svg></span><div><span>Torneos disponibles</span><strong>0</strong><small>Tres disciplinas, una comunidad</small></div></article>
   <article class="stat-card"><span class="stat-icon green"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
-</svg></span><div><span>Equipos inscritos</span><strong>12</strong><small>En todos los torneos</small></div></article>
+</svg></span><div><span>Equipos inscritos</span><strong>0</strong><small>En todos los torneos</small></div></article>
   <article class="stat-card"><span class="stat-icon orange"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="m5 12 4 4L19 6"/>
-</svg></span><div><span>Partidos resueltos</span><strong>6</strong><small>Resultados registrados</small></div></article>
+</svg></span><div><span>Partidos resueltos</span><strong>0</strong><small>Resultados registrados</small></div></article>
 </section>
 <section id="torneos"><div class="section-heading"><div><h2>Encuentra tu próximo torneo</h2><p>Elige tu disciplina y entra a la cancha.</p></div><label class="search-field"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>
@@ -105,9 +111,9 @@
 <circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
 </svg></span><span class="sport-number">01</span></div><div class="tournament-card-content"><div class="card-title"><h3>Fútbol</h3><span class="status-pill">Disponible</span></div><p>La pasión se juega en equipo.</p><div class="card-meta"><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
-</svg> 4 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M3 4h5v6H3m5-3h5v10H8m-5 3h5v-6H3m10-2h8"/>
-</svg> 2/3 resultados</span></div><a class="card-link" href="profesor-futbol.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0/3 resultados</span></div><a class="card-link" href="profesor-futbol.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M5 12h14m-5-5 5 5-5 5"/>
 </svg></a></div></article>
 
@@ -121,9 +127,9 @@
 <circle cx="12" cy="12" r="9"/><path d="m6 5 13 13M3 12h18M12 3v18M5 6c6 0 13 7 13 13"/>
 </svg></span><span class="sport-number">02</span></div><div class="tournament-card-content"><div class="card-title"><h3>Básquetbol</h3><span class="status-pill">Disponible</span></div><p>Cada punto cuenta. Cada equipo también.</p><div class="card-meta"><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
-</svg> 4 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M3 4h5v6H3m5-3h5v10H8m-5 3h5v-6H3m10-2h8"/>
-</svg> 2/3 resultados</span></div><a class="card-link" href="profesor-basketball.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0/3 resultados</span></div><a class="card-link" href="profesor-basketball.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M5 12h14m-5-5 5 5-5 5"/>
 </svg></a></div></article>
 
@@ -136,33 +142,21 @@
 <circle cx="12" cy="12" r="9"/><path d="m12 12 8-4m-8 4-1 9m1-9L5 6m7-3c-1 3-1 6 0 9m8 6c-3-2-6-4-8-6M3 14c3 0 6-1 9-2"/>
 </svg></span><span class="sport-number">03</span></div><div class="tournament-card-content"><div class="card-title"><h3>Voleibol</h3><span class="status-pill">Disponible</span></div><p>Conecta, juega y supera la red.</p><div class="card-meta"><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
-</svg> 4 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0 equipos</span><span><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M3 4h5v6H3m5-3h5v10H8m-5 3h5v-6H3m10-2h8"/>
-</svg> 2/3 resultados</span></div><a class="card-link" href="profesor-voleibol.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+</svg> 0/3 resultados</span></div><a class="card-link" href="profesor-voleibol.html">Gestionar torneo <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M5 12h14m-5-5 5 5-5 5"/>
 </svg></a></div></article>
 
 </div><p class="empty-search muted" hidden>No encontramos un torneo con ese nombre.</p></section>
 <section class="panel recent-panel"><div class="section-heading"><div><h2>Últimas inscripciones</h2><p>La comunidad sigue sumando equipos.</p></div><span class="soft-label">ACTIVIDAD</span></div>
-<div class="table-wrap" role="region" aria-label="Últimas inscripciones" tabindex="0"><table><thead><tr><th>Equipo / participante</th><th>Disciplina</th><th>Curso</th><th>Inscripción (UTC)</th><th><span class="sr-only">Acción</span></th></tr></thead><tbody><tr><td><strong>Los Cóndores</strong></td><td><span class="discipline"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
-</svg> Fútbol</span></td><td>3° Medio A</td><td>07/10/2026</td><td><a class="text-link" href="profesor-futbol.html#equipos">Ver <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<div class="empty-state"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/>
+</svg><h3>Aquí comienza tu próximo equipo</h3><p>Las inscripciones aparecerán aquí cuando se registren.</p><a class="text-link" href="#torneos">Explorar disciplinas <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M5 12h14m-5-5 5 5-5 5"/>
-</svg></a></td></tr><tr><td><strong>Atlético Escolar</strong></td><td><span class="discipline"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
-</svg> Fútbol</span></td><td>2° Medio B</td><td>07/10/2026</td><td><a class="text-link" href="profesor-futbol.html#equipos">Ver <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="M5 12h14m-5-5 5 5-5 5"/>
-</svg></a></td></tr><tr><td><strong>Los Pumas</strong></td><td><span class="discipline"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
-</svg> Fútbol</span></td><td>4° Medio A</td><td>07/10/2026</td><td><a class="text-link" href="profesor-futbol.html#equipos">Ver <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="M5 12h14m-5-5 5 5-5 5"/>
-</svg></a></td></tr><tr><td><strong>Deportivo Norte</strong></td><td><span class="discipline"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
-</svg> Fútbol</span></td><td>3° Medio B</td><td>07/10/2026</td><td><a class="text-link" href="profesor-futbol.html#equipos">Ver <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-<path d="M5 12h14m-5-5 5 5-5 5"/>
-</svg></a></td></tr></tbody></table></div>
-</section>
+</svg></a></div></section>
 
+  </div>
   <footer class="footer"><span>Torneo · Gestor de torneos internos</span><span>Hecho para tu comunidad escolar</span></footer>
   </main>
 </div>

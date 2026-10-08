@@ -48,16 +48,14 @@ document.querySelector('.password-toggle')?.addEventListener('click', event => {
   button.setAttribute('aria-label', showing ? 'Ocultar contraseña' : 'Mostrar contraseña');
 });
 
-document.querySelectorAll('.toast-close').forEach(button => {
-  button.addEventListener('click', () => button.closest('.toast').remove());
-});
-document.querySelectorAll('[data-edit]').forEach(button => {
-  button.addEventListener('click', () => {
-    const form = document.getElementById(button.dataset.edit);
-    form.hidden = !form.hidden;
-    button.setAttribute('aria-expanded', String(!form.hidden));
-    if (!form.hidden) form.querySelector('input:not([type=hidden])').focus();
-  });
+document.addEventListener('click', event => event.target.closest('.toast-close')?.closest('.toast').remove());
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-edit]');
+  if (!button) return;
+  const form = document.getElementById(button.dataset.edit);
+  form.hidden = !form.hidden;
+  button.setAttribute('aria-expanded', String(!form.hidden));
+  if (!form.hidden) form.querySelector('input:not([type=hidden])').focus();
 });
 
 const search = document.getElementById('tournament-search');
@@ -83,8 +81,9 @@ dialog?.querySelector('[data-confirm]').addEventListener('click', () => {
   }
 });
 
-document.querySelectorAll('form').forEach(form => {
-  form.addEventListener('submit', event => {
+document.addEventListener('submit', event => {
+    const form = event.target;
+    if (event.defaultPrevented) return;
     if (form.classList.contains('loading')) { event.preventDefault(); return; }
     const teams = [...form.querySelectorAll('input[name=equipos]')];
     if (teams.length && teams.filter(input => input.checked).length !== 4) {
@@ -106,10 +105,9 @@ document.querySelectorAll('form').forEach(form => {
     form.setAttribute('aria-busy', 'true');
     // Se difiere el bloqueo para conservar los valores enviados del formulario.
     setTimeout(() => form.querySelectorAll('button[type=submit]').forEach(button => { button.disabled = true; }), 0);
-  });
-  form.querySelectorAll('input[name=equipos]').forEach(input => {
-    input.addEventListener('change', () => form.querySelector('input[name=equipos]').setCustomValidity(''));
-  });
+ });
+document.addEventListener('change', event => {
+  if (event.target.matches('input[name=equipos]')) event.target.form.querySelector('input[name=equipos]').setCustomValidity('');
 });
 window.addEventListener('pageshow', () => {
   document.querySelectorAll('form.loading').forEach(form => {

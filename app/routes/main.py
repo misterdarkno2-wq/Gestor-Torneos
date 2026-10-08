@@ -1,6 +1,5 @@
 import json
 
-import pymysql
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
 from app.models import torneo as model
@@ -25,12 +24,7 @@ def return_tournament(slug, anchor=''):
 def report_error(exc):
     if isinstance(exc, PermissionError):
         abort(403)
-    if isinstance(exc, pymysql.err.IntegrityError):
-        if exc.args[0] != 1062:
-            raise exc
-        flash('Ya existe una inscripción con ese nombre y curso en este torneo.', 'error')
-    else:
-        flash(str(exc), 'error')
+    flash(str(exc), 'error')
 
 
 @bp.get('/')
@@ -84,7 +78,7 @@ def registration(slug):
     tournament = tournament_or_404(slug)
     try:
         model.register(tournament['id'], g.user['id'], request.form.get('nombre', ''), request.form.get('curso', ''))
-    except (ValueError, pymysql.err.IntegrityError) as exc:
+    except (ValueError, PermissionError) as exc:
         report_error(exc)
         return return_tournament(slug, 'inscripcion')
     session['confirmation'] = {'message': 'Tu equipo quedó inscrito correctamente.', 'slug': slug}
@@ -101,7 +95,7 @@ def modify_registration(slug, registration_id, action):
         model.edit_registration(tournament['id'], registration_id, g.user,
                                 request.form.get('nombre', ''), request.form.get('curso', ''), delete=action == 'eliminar')
         flash('Inscripción eliminada.' if action == 'eliminar' else 'Inscripción actualizada.', 'success')
-    except (ValueError, PermissionError, pymysql.err.IntegrityError) as exc:
+    except (ValueError, PermissionError) as exc:
         report_error(exc)
     return return_tournament(slug, 'equipos')
 
@@ -114,7 +108,7 @@ def bracket(slug):
         ids = [int(value) for value in request.form.getlist('equipos')]
         model.create_bracket(tournament['id'], ids)
         flash('Llaves guardadas. Ya puedes registrar los ganadores.', 'success')
-    except ValueError as exc:
+    except (ValueError, PermissionError) as exc:
         report_error(exc)
     return return_tournament(slug, 'llaves')
 
@@ -127,7 +121,7 @@ def result(slug, match_id):
         winner = int(request.form.get('ganador', ''))
         model.save_winner(tournament['id'], match_id, winner)
         flash('Resultado guardado. La final se actualizó automáticamente.', 'success')
-    except ValueError as exc:
+    except (ValueError, PermissionError) as exc:
         report_error(exc)
     return return_tournament(slug, 'llaves')
 

@@ -6,24 +6,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6355d8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://mbpbukoqmsgzyilhnfay.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Esta página no existe · Torneo</title>
   <link rel="icon" href="static/images/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="static/css/app.css">
-  <link rel="stylesheet" href="static/css/pages.css">
+
   <script src="static/js/app.js" defer></script>
+  <script src="static/js/pages.bundle.js" defer></script>
 </head>
-<body class="">
+<body class="" data-pages-live data-role="" data-slug="">
 <a class="skip-link" href="#main">Saltar al contenido</a>
 <main id="main" tabindex="-1" class="public-main">
   <div class="toast-region" aria-live="polite" aria-atomic="true">
-    
+
   </div>
-  <div class="pages-preview-note" role="note"><strong>Vista de ejemplo</strong><span>Datos ficticios. Las inscripciones y el acceso real requieren la aplicación con servidor.</span></div>
-  <section class="panel error-card"><span class="error-code">404</span><h1>Esta página no existe</h1><p>Vuelve a la portada de Torneo para continuar.</p><a class="button primary" href="index.html">Volver al inicio <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+
+  <div id="connection-status" role="status" class="inline-note"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/>
+</svg><span>Conectando con tu espacio…</span></div>
+  <div id="page-content" >
+  <section class="panel error-card"><span class="error-code">404</span><h1>Esta página no existe</h1><p>Vuelve al inicio de Torneo para continuar.</p><a class="button primary" href="index.html">Volver al inicio <svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 <path d="M5 12h14m-5-5 5 5-5 5"/>
 </svg></a></section>
-  
+  </div>
+
   </main>
 
 <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title"><div class="dialog-icon"><svg class="icon " width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

@@ -1,4 +1,5 @@
-import pymysql
+from urllib.parse import urlparse
+from app.database.connection import SupabaseError
 from flask import Flask, g, render_template
 from flask_wtf.csrf import CSRFError
 
@@ -15,10 +16,9 @@ def create_app(test_config=None):
         raise RuntimeError('Configura una SECRET_KEY aleatoria de al menos 32 caracteres en .env.')
     if app.config['APP_ENV'] == 'production' and not app.config['SESSION_COOKIE_SECURE']:
         raise RuntimeError('En producción debes usar HTTPS y COOKIE_SECURE=true.')
-    if (app.config['APP_ENV'] == 'production'
-            and app.config['DB_HOST'] not in ('localhost', '127.0.0.1', '::1')
-            and not app.config['DB_SSL_CA']):
-        raise RuntimeError('Para MySQL remoto configura DB_SSL_CA con el certificado CA del proveedor.')
+    parsed = urlparse(app.config['SUPABASE_URL'])
+    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.path:
+        raise RuntimeError('SUPABASE_URL debe ser la URL HTTPS del proyecto, sin rutas ni credenciales.')
 
     from app.cli import register_cli
     from app.models.torneo import PHASES, SPORTS
@@ -51,12 +51,12 @@ def create_app(test_config=None):
             response.headers['Strict-Transport-Security'] = 'max-age=31536000'
         return response
 
-    @app.errorhandler(pymysql.MySQLError)
+    @app.errorhandler(SupabaseError)
     def database_error(error):
         # Sólo el código del error al log: no exponer SQL, credenciales ni datos.
-        app.logger.error('MySQL no disponible (código %s)', error.args[0] if error.args else 'desconocido')
+        app.logger.error('Supabase no disponible (estado %s)', error.status)
         return render_template('error.html', code=503, title='No podemos conectar con los datos',
-                               message='Inténtalo nuevamente en unos momentos. Si continúa, pide al administrador que revise la conexión MySQL.'), 503
+                               message='Inténtalo nuevamente en unos momentos. Si continúa, pide al administrador que revise la configuración de Supabase.'), 503
 
     @app.errorhandler(CSRFError)
     def csrf_error(error):

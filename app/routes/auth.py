@@ -2,7 +2,7 @@ from flask import Blueprint, flash, g, redirect, render_template, request, sessi
 
 from app.models.usuario import authenticate, revoke_session
 from app.security import login_required
-from app.validation import clean_username
+from app.validation import clean_email
 
 bp = Blueprint('auth', __name__)
 
@@ -20,7 +20,7 @@ def login():
         password = request.form.get('contrasena', '')
         remember = request.form.get('recordar') == 'on'
         try:
-            clean_username(username)
+            clean_email(username)
             if not 1 <= len(password) <= 128:
                 raise ValueError('Introduce una contraseña de hasta 128 caracteres.')
         except ValueError as exc:

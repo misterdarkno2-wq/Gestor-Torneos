@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-import pymysql
+from app.database.connection import SupabaseError
 import pytest
 
 from app import create_app
@@ -20,12 +20,12 @@ def test_pages_require_login(client, path):
 def test_login_csrf_and_hash_authentication(client, monkeypatch):
     authenticate = Mock(return_value=('new-session', None))
     monkeypatch.setattr('app.routes.auth.authenticate', authenticate)
-    assert client.post('/login', data={'usuario': 'profesor', 'contrasena': 'password'}).status_code == 400
+    assert client.post('/login', data={'usuario': 'profesor@example.test', 'contrasena': 'password'}).status_code == 400
     authenticate.assert_not_called()
     token = csrf_token(client)
-    response = client.post('/login', data={'csrf_token': token, 'usuario': 'PROFESOR', 'contrasena': 'password', 'recordar': 'on'})
+    response = client.post('/login', data={'csrf_token': token, 'usuario': 'PROFESOR@EXAMPLE.TEST', 'contrasena': 'password', 'recordar': 'on'})
     assert response.status_code == 302
-    authenticate.assert_called_once_with('profesor', 'password', '127.0.0.1', True)
+    authenticate.assert_called_once_with('profesor@example.test', 'password', '127.0.0.1', True)
     assert 'HttpOnly' in response.headers['Set-Cookie'] and 'SameSite=Lax' in response.headers['Set-Cookie']
     with client.session_transaction() as session:
         assert session['auth_token'] == 'new-session' and session.permanent
@@ -59,14 +59,14 @@ def test_student_only_sees_own_edit_controls(signed_client, monkeypatch):
 
 
 def test_database_failure_is_503_and_static_stays_available(client, monkeypatch):
-    monkeypatch.setattr('app.routes.auth.authenticate', Mock(side_effect=pymysql.err.OperationalError(2003, 'private detail')))
+    monkeypatch.setattr('app.routes.auth.authenticate', Mock(side_effect=SupabaseError(503)))
     token = csrf_token(client)
-    response = client.post('/login', data={'csrf_token': token, 'usuario': 'profesor', 'contrasena': 'pw'})
+    response = client.post('/login', data={'csrf_token': token, 'usuario': 'profesor@example.test', 'contrasena': 'pw'})
     assert response.status_code == 503
     assert b'private detail' not in response.data
     with client.session_transaction() as session:
         session['auth_token'] = 'test'
-    monkeypatch.setattr('app.security.session_user', Mock(side_effect=pymysql.err.OperationalError(2003, 'private detail')))
+    monkeypatch.setattr('app.security.session_user', Mock(side_effect=SupabaseError(503)))
     assert client.get('/dashboard').status_code == 503
     assert client.get('/static/css/app.css').status_code == 200
 
@@ -81,7 +81,7 @@ def test_html_escapes_account_name(signed_client, monkeypatch):
 def test_login_lockout_returns_retry_header(client, monkeypatch):
     monkeypatch.setattr('app.routes.auth.authenticate', Mock(return_value=(None, 'Demasiados intentos. Espera 15 minutos.')))
     token = csrf_token(client)
-    response = client.post('/login', data={'csrf_token': token, 'usuario': 'profesor', 'contrasena': 'bad'})
+    response = client.post('/login', data={'csrf_token': token, 'usuario': 'profesor@example.test', 'contrasena': 'bad'})
     assert response.status_code == 429 and response.headers['Retry-After'] == '900'
 
 
@@ -103,16 +103,14 @@ def test_registration_validation_rejects_invalid_input(value):
         clean_text(value, 'Equipo', 60)
 
 
-def test_remote_mysql_requires_tls_in_production():
-    with pytest.raises(RuntimeError, match='DB_SSL_CA'):
-        create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'production',
-                    'SESSION_COOKIE_SECURE': True, 'DB_HOST': 'db.example.org', 'DB_SSL_CA': ''})
+def test_supabase_rejects_plain_http():
+    with pytest.raises(RuntimeError, match='HTTPS'):
+        create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'development', 'SUPABASE_URL': 'http://example.org'})
 
 
-def test_remote_mysql_without_certificate_is_allowed_in_development():
-    app = create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'development',
-                      'DB_HOST': 'db.example.org', 'DB_SSL_CA': ''})
-    assert app.config['DB_SSL_CA'] == ''
+def test_production_requires_secure_cookies():
+    with pytest.raises(RuntimeError, match='COOKIE_SECURE'):
+        create_app({'SECRET_KEY': 'x' * 64, 'APP_ENV': 'production', 'SESSION_COOKIE_SECURE': False})
 
 
 def test_headers_and_missing_paths(client):
