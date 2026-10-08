@@ -4,17 +4,21 @@ Gestión de fútbol, básquetbol y voleibol con **Supabase Auth y PostgreSQL**, 
 
 Sitio: [Gestor de Torneos](https://misterdarkno2-wq.github.io/Gestor-Torneos/).
 
-## Activar Supabase
+## Estado de Supabase y alta de cuentas
 
-La URL y clave publicable del proyecto están en `supabase/public-config.json`. Se comprobó que el servicio Auth responde; **la migración y el primer perfil todavía requieren aplicarse en el proyecto remoto**. La captura por sí sola no proporciona acceso administrativo.
+La URL y clave publicable del proyecto están en `supabase/public-config.json`. **Las dos migraciones ya están aplicadas en el proyecto remoto**, con los tres deportes y el primer perfil de profesor activo. Su correo está confirmado en Supabase Auth. Abre el sitio e ingresa con el correo y la contraseña que configuraste en Supabase.
+
+Para configurar otro proyecto desde cero:
 
 1. Abre el [SQL Editor de tu proyecto](https://supabase.com/dashboard/project/mbpbukoqmsgzyilhnfay/sql/new).
-2. Copia y ejecuta **completo** `supabase/migrations/202610070001_torneos.sql`. Crea tablas `gt_*`, tres deportes, funciones transaccionales y políticas RLS; conserva datos existentes. No modifica otras tablas ni opciones de Auth. Puede ejecutarse otra vez.
+2. Aplica los archivos completos, en orden: `supabase/migrations/20261008023417_init_torneos_supabase.sql` y `supabase/migrations/20261008023738_provision_invited_profiles.sql`. El primero crea tablas `gt_*`, tres deportes, funciones transaccionales y políticas RLS; conserva datos existentes. El segundo añade el alta de perfiles previamente autorizados cuando Auth confirma el correo. No repitas la segunda migración si ya está aplicada.
 3. En **Authentication → Users → Add user**, crea la cuenta de acceso con correo y contraseña. Confirma el correo por el procedimiento del panel o por el mensaje de verificación; no compartas la contraseña en el repositorio.
 4. En `supabase/alta-perfil.sql`, reemplaza correo y nombre, y usa rol `profesor` para el administrador o `estudiante` para el alumno. Ejecuta ese archivo para asociar la cuenta a Torneo. Si no se inserta ninguna fila, revisa el correo. Una cuenta Auth sin perfil activo no accede a esta aplicación.
 5. Abre el sitio e ingresa con **correo y contraseña**. Los antiguos usuarios/contraseñas hardcoded no crean cuentas de Supabase. El rol se obtiene del perfil protegido, nunca de `user_metadata` ni de la URL.
 
-También puede aplicarse la migración desde el plugin Supabase en Codex cuando esté conectado al proyecto. La clave publicable permite usar la app con RLS, pero no ejecutar migraciones o crear profesores.
+También pueden aplicarse las migraciones desde el plugin Supabase conectado en Codex. La clave publicable permite usar la app con RLS, pero no ejecutar migraciones o crear profesores. Los archivos locales coinciden con las versiones registradas remotamente.
+
+Para autorizar un alta futura, administración puede insertar el correo en `gt_private.gt_invited_profiles`, con nombre y rol. El trigger crea el perfil sólo después de confirmar ese correo y consume la autorización. No incorpora automáticamente a otros usuarios del proyecto ni utiliza metadata editable para asignar roles. Para cuentas existentes sigue disponible `supabase/alta-perfil.sql`.
 
 Verificar conectividad y permisos anónimos, sin modificar datos:
 
@@ -44,7 +48,7 @@ Pon el resultado en `SECRET_KEY`. Configura `SUPABASE_URL` y `SUPABASE_PUBLISHAB
 .\.venv\Scripts\python.exe run.py
 ```
 
-Abre **http://127.0.0.1:5000**. Se mantienen las rutas `/dashboard`, `/torneos/futbol` y los enlaces históricos `.html`. `flask --app run init-db` indica dónde está la migración; no simula que se haya ejecutado remotamente.
+Abre **http://127.0.0.1:5000**. Se mantienen las rutas `/dashboard`, `/torneos/futbol` y los enlaces históricos `.html`. `flask --app run init-db` muestra las migraciones ordenadas para un proyecto nuevo; no las ejecuta remotamente.
 
 Para producción Flask: HTTPS detrás de un proxy correctamente configurado, `APP_ENV=production`, `COOKIE_SECURE=true`, `TRUSTED_HOSTS` con tus dominios y protección de la carpeta `instance/`. Las sesiones están en un SQLite privado local, únicamente para tokens; los datos de los torneos permanecen en Supabase. Este almacén sirve para trabajadores en una misma máquina; varias máquinas necesitan un almacén de sesiones compartido.
 
@@ -86,9 +90,9 @@ Los paneles requieren sesión y redirigen al rol real de la cuenta. Los datos de
 - Un equipo que aparece en una llave no se elimina hasta reorganizarla. Los nombres y cursos se validan; los duplicados se comparan sin distinguir mayúsculas.
 - Importar JSON es atómico, admite hasta 100 filas y 128 KB y omite duplicados. Mantiene la función para recuperar inscripciones del sistema anterior.
 
-Las funciones SQL comprueban identidad, perfil activo, rol, propiedad y sesión de Supabase vigente. Bloquean el torneo dentro de la transacción. RLS está activado y no se conceden escrituras directas a `anon`/`authenticated`, ni permisos para que un alumno eleve su rol. Para desactivar acceso a Torneo, pon `gt_profiles.activo=false` desde administración.
+Las funciones SQL comprueban identidad, perfil activo, rol, propiedad y sesión de Supabase vigente. Bloquean el torneo dentro de la transacción. Las implementaciones privilegiadas están en el esquema privado `gt_private`; las funciones públicas son wrappers sin privilegios elevados. RLS está activado y no se conceden escrituras directas a `anon`/`authenticated`, ni permisos para que un alumno eleve su rol. Para desactivar acceso a Torneo, pon `gt_profiles.activo=false` desde administración.
 
-Supabase Auth gestiona hashes, tokens, renovación y límites de solicitudes. Revisa **Authentication → Rate Limits** en el panel: ya no se usan los antiguos contadores MySQL de cinco intentos. Configura límites/CAPTCHA según el despliegue; no se han cambiado opciones de Auth de tu proyecto.
+Supabase Auth gestiona hashes, tokens, renovación y límites de solicitudes. Revisa **Authentication → Rate Limits** en el panel: ya no se usan los antiguos contadores MySQL de cinco intentos. Configura límites/CAPTCHA según el despliegue; no se han cambiado opciones de Auth de tu proyecto. Su auditoría señala que la [protección contra contraseñas filtradas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) está desactivada; Supabase la ofrece en planes Pro o superiores. No se modificó la suscripción.
 
 En Flask la cookie HttpOnly/SameSite contiene sólo un identificador aleatorio; los JWT/refresh tokens quedan en `instance/`. La sesión local vence a las 12 horas o 30 días si se recuerda. Los formularios mantienen CSRF y Jinja escapa HTML. En Pages los tokens están en `sessionStorage`, o `localStorage` al elegir Recordar sesión, con renovación mediante el SDK; la duración remota depende de la configuración de Supabase. Se aplica CSP y se escapan textos dinámicos. Cerrar sesión revoca la sesión actual de Supabase; las funciones también comprueban su registro para rechazar JWT de sesiones revocadas. Si no hay red, el cierre local se completa y se informa que falta confirmar el cierre remoto.
 
@@ -123,4 +127,4 @@ $env:RUN_BROWSER_TESTS="1"
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Las pruebas de SQL usan PostgreSQL en PGlite con el contexto Auth simulado. Las de navegador usan Google Chrome instalado y respuestas de Supabase simuladas: no escriben en tu proyecto. Consulta `VERIFICACION.md` para distinguir comprobaciones locales de las pendientes en el servidor remoto.
+Las pruebas de SQL usan PostgreSQL en PGlite con el contexto Auth simulado. Las de navegador usan Google Chrome instalado y respuestas de Supabase simuladas: no escriben en tu proyecto. Consulta `VERIFICACION.md` para distinguir comprobaciones locales y remotas del primer login e inscripción reales que debe probar el usuario.

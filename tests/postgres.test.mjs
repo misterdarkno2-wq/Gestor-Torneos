@@ -5,7 +5,7 @@ import { test, after } from 'node:test';
 
 const db = new PGlite();
 after(() => db.close());
-const sql = await readFile(new URL('../supabase/migrations/202610070001_torneos.sql', import.meta.url), 'utf8');
+const sql = await readFile(new URL('../supabase/migrations/20261008023417_init_torneos_supabase.sql', import.meta.url), 'utf8');
 const professor = '10000000-0000-4000-8000-000000000001';
 const student = '10000000-0000-4000-8000-000000000002';
 const outsider = '10000000-0000-4000-8000-000000000003';
@@ -50,7 +50,7 @@ test('Alumno no puede elevar rol ni escribir tablas directamente', async () => {
   await identity(student);
   await rejects(()=>db.query("update public.gt_profiles set rol='profesor'"),'42501');
   await rejects(()=>db.query("insert into public.gt_registrations(torneo_id,usuario_id,nombre,curso) values ($1,$2,'Intruso','3 A')",[tid,professor]),'42501');
-  await rejects(()=>call('gt_lock',[tid,true]),'42501');
+  await rejects(()=>db.query('select gt_private.gt_lock($1,true)',[tid]),'42501');
 });
 test('Inscripción validada, identidad del JWT y duplicados normalizados', async () => {
   await identity(student);
@@ -111,4 +111,26 @@ test('Perfil desactivado y sesión revocada cortan acceso a la base', async () =
   await db.exec('reset role'); await db.query('update public.gt_profiles set activo=true where id=$1',[student]);
   await db.query('delete from auth.sessions where user_id=$1',[student]);
   await identity(student); await rejects(()=>call('gt_register',[tid,'Otra Prueba','3 A']),'PT403');
+});
+
+test('Alta de perfiles sólo por invitación administrativa y correo verificado', async () => {
+  await db.exec('reset role');
+  await db.exec('alter table auth.users add column email_confirmed_at timestamptz');
+  const files = await import('node:fs/promises');
+  const names = await files.readdir(new URL('../supabase/migrations/', import.meta.url));
+  const invitationSQL = await readFile(new URL('../supabase/migrations/'+names.find(n=>n.endsWith('_provision_invited_profiles.sql')), import.meta.url), 'utf8');
+  await db.exec(invitationSQL);
+  const invited='20000000-0000-4000-8000-000000000001';
+  const uninvited='20000000-0000-4000-8000-000000000002';
+  await db.query("insert into gt_private.gt_invited_profiles values ('admin@example.test','Administrador','profesor')");
+  await db.query('insert into auth.users(id,email) values ($1,$2)',[invited,'admin@example.test']);
+  assert.equal((await db.query('select count(*)::int n from public.gt_profiles where id=$1',[invited])).rows[0].n,0);
+  await db.query('update auth.users set email_confirmed_at=now() where id=$1',[invited]);
+  assert.equal((await db.query('select rol from public.gt_profiles where id=$1',[invited])).rows[0].rol,'profesor');
+  assert.equal((await db.query('select count(*)::int n from gt_private.gt_invited_profiles')).rows[0].n,0);
+  await db.query('insert into auth.users(id,email,email_confirmed_at) values ($1,$2,now())',[uninvited,'other@example.test']);
+  assert.equal((await db.query('select count(*)::int n from public.gt_profiles where id=$1',[uninvited])).rows[0].n,0);
+  await identity(student);
+  await rejects(()=>db.query('select * from gt_private.gt_invited_profiles'),'42501');
+  await rejects(()=>db.query("insert into gt_private.gt_invited_profiles values ('intruder@example.test','Intruso','profesor')"),'42501');
 });

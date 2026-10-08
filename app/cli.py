@@ -8,8 +8,11 @@ from app.validation import clean_email, clean_text
 
 @click.command('init-db')
 def init_db():
-    click.echo('Ejecuta el archivo completo en Supabase > SQL Editor:')
-    click.echo(str(Path(__file__).resolve().parents[1] / 'supabase/migrations/202610070001_torneos.sql'))
+    click.echo('Para un proyecto nuevo, ejecuta estas migraciones en orden en Supabase > SQL Editor:')
+    migrations = Path(__file__).resolve().parents[1] / 'supabase/migrations'
+    for migration in sorted(migrations.glob('*.sql')):
+        click.echo(str(migration))
+    click.echo('No repitas migraciones ya registradas en el proyecto remoto.')
     click.echo('La clave publicable no tiene permisos para aplicar migraciones.')
 
 

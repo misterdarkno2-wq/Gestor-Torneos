@@ -1,6 +1,10 @@
 -- Ejecutar completo en Supabase > SQL Editor. Es aditivo: no borra otras tablas.
 begin;
 
+create schema if not exists gt_private;
+revoke all on schema gt_private from public, anon;
+grant usage on schema gt_private to authenticated;
+
 create table if not exists public.gt_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nombre text not null check (char_length(nombre) between 2 and 80),
@@ -39,12 +43,15 @@ create table if not exists public.gt_matches (
   check (ganador_id is null or (equipo_a_id is not null and equipo_b_id is not null
           and ganador_id in (equipo_a_id, equipo_b_id)))
 );
+create index if not exists gt_match_team_a on public.gt_matches(equipo_a_id,torneo_id);
+create index if not exists gt_match_team_b on public.gt_matches(equipo_b_id,torneo_id);
+create index if not exists gt_match_winner on public.gt_matches(ganador_id,torneo_id);
 insert into public.gt_tournaments(slug, nombre) values
  ('futbol', 'Fútbol'), ('basketball', 'Básquetbol'), ('voleibol', 'Voleibol')
  on conflict (slug) do nothing;
 
 -- El rol procede del perfil administrado, nunca de metadata editable del usuario.
-create or replace function public.gt_role() returns text
+create or replace function gt_private.gt_role() returns text
 language plpgsql stable security definer set search_path = '' as $$
 declare v_role text;
 begin
@@ -59,7 +66,7 @@ begin
   return v_role;
 end $$;
 
-create or replace function public.gt_clean(p_value text, p_max integer, p_course boolean default false)
+create or replace function gt_private.gt_clean(p_value text, p_max integer, p_course boolean default false)
 returns text language plpgsql immutable set search_path = '' as $$
 declare v text;
 begin
@@ -71,11 +78,11 @@ begin
   return v;
 end $$;
 
-create or replace function public.gt_state(p_slug text default null) returns jsonb
+create or replace function gt_private.gt_state(p_slug text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare v_role text; v_t public.gt_tournaments; v_result jsonb;
 begin
-  v_role := public.gt_role();
+  v_role := gt_private.gt_role();
   select jsonb_build_object('user', to_jsonb(p)) into v_result
     from public.gt_profiles p where p.id = auth.uid();
   if p_slug is null then
@@ -101,11 +108,11 @@ begin
       left join public.gt_registrations g on g.id=m.ganador_id where m.torneo_id=v_t.id) x));
 end $$;
 
-create or replace function public.gt_lock(p_torneo bigint, p_professor boolean default false)
+create or replace function gt_private.gt_lock(p_torneo bigint, p_professor boolean default false)
 returns void language plpgsql security definer set search_path = '' as $$
 declare v_role text;
 begin
-  v_role := public.gt_role();
+  v_role := gt_private.gt_role();
   if p_professor and v_role <> 'profesor' then
     raise sqlstate 'PT403' using message='Esta acción requiere una cuenta de profesor.';
   end if;
@@ -113,25 +120,25 @@ begin
   if not found then raise sqlstate 'PT404' using message='No se encontró el torneo.'; end if;
 end $$;
 
-create or replace function public.gt_register(p_torneo bigint, p_nombre text, p_curso text)
+create or replace function gt_private.gt_register(p_torneo bigint, p_nombre text, p_curso text)
 returns bigint language plpgsql security definer set search_path = '' as $$
 declare v_id bigint;
 begin
-  perform public.gt_lock(p_torneo);
+  perform gt_private.gt_lock(p_torneo);
   insert into public.gt_registrations(torneo_id, usuario_id, nombre, curso)
-    values (p_torneo, auth.uid(), public.gt_clean(p_nombre,60), public.gt_clean(p_curso,20,true))
+    values (p_torneo, auth.uid(), gt_private.gt_clean(p_nombre,60), gt_private.gt_clean(p_curso,20,true))
     returning id into v_id;
   return v_id;
 end $$;
 
-create or replace function public.gt_edit(p_torneo bigint, p_id bigint,
+create or replace function gt_private.gt_edit(p_torneo bigint, p_id bigint,
     p_nombre text default null, p_curso text default null, p_delete boolean default false)
 returns void language plpgsql security definer set search_path = '' as $$
 declare v_owner uuid;
 begin
-  perform public.gt_lock(p_torneo);
+  perform gt_private.gt_lock(p_torneo);
   select usuario_id into v_owner from public.gt_registrations where id=p_id and torneo_id=p_torneo;
-  if not found or (public.gt_role() <> 'profesor' and v_owner <> auth.uid()) then
+  if not found or (gt_private.gt_role() <> 'profesor' and v_owner <> auth.uid()) then
     raise sqlstate 'PT403' using message='No puedes modificar esta inscripción.';
   end if;
   if p_delete then
@@ -141,14 +148,14 @@ begin
     end if;
     delete from public.gt_registrations where id=p_id;
   else
-    update public.gt_registrations set nombre=public.gt_clean(p_nombre,60), curso=public.gt_clean(p_curso,20,true) where id=p_id;
+    update public.gt_registrations set nombre=gt_private.gt_clean(p_nombre,60), curso=gt_private.gt_clean(p_curso,20,true) where id=p_id;
   end if;
 end $$;
 
-create or replace function public.gt_bracket(p_torneo bigint, p_equipos bigint[])
+create or replace function gt_private.gt_bracket(p_torneo bigint, p_equipos bigint[])
 returns void language plpgsql security definer set search_path = '' as $$
 begin
-  perform public.gt_lock(p_torneo, true);
+  perform gt_private.gt_lock(p_torneo, true);
   if coalesce(cardinality(p_equipos),0) <> 4 or (select count(distinct x) from unnest(p_equipos) x) <> 4 then
     raise sqlstate 'PT400' using message='Selecciona cuatro equipos distintos para las semifinales.';
   end if;
@@ -161,11 +168,11 @@ begin
     (p_torneo,'semifinal2',p_equipos[3],p_equipos[4]), (p_torneo,'final',null,null);
 end $$;
 
-create or replace function public.gt_winner(p_torneo bigint, p_partido bigint, p_ganador bigint)
+create or replace function gt_private.gt_winner(p_torneo bigint, p_partido bigint, p_ganador bigint)
 returns void language plpgsql security definer set search_path = '' as $$
 declare v_match public.gt_matches; v_a bigint; v_b bigint;
 begin
-  perform public.gt_lock(p_torneo, true);
+  perform gt_private.gt_lock(p_torneo, true);
   select * into v_match from public.gt_matches where id=p_partido and torneo_id=p_torneo;
   if not found or v_match.equipo_a_id is null or v_match.equipo_b_id is null then
     raise sqlstate 'PT400' using message='El partido todavía no tiene dos equipos definidos.';
@@ -183,11 +190,11 @@ begin
   end if;
 end $$;
 
-create or replace function public.gt_import(p_torneo bigint, p_rows jsonb)
+create or replace function gt_private.gt_import(p_torneo bigint, p_rows jsonb)
 returns integer language plpgsql security definer set search_path = '' as $$
 declare r jsonb; v_nombre text; v_curso text; v_count integer := 0; v_added integer;
 begin
-  perform public.gt_lock(p_torneo);
+  perform gt_private.gt_lock(p_torneo);
   if p_rows is null or jsonb_typeof(p_rows) <> 'array' then
     raise sqlstate 'PT400' using message='El archivo debe contener una lista de inscripciones.';
   end if;
@@ -198,7 +205,7 @@ begin
     if jsonb_typeof(r->'nombre') is distinct from 'string' or jsonb_typeof(r->'curso') is distinct from 'string' then
       raise sqlstate 'PT400' using message='Cada inscripción necesita nombre y curso como texto.';
     end if;
-    v_nombre := public.gt_clean(r->>'nombre',60); v_curso := public.gt_clean(r->>'curso',20,true);
+    v_nombre := gt_private.gt_clean(r->>'nombre',60); v_curso := gt_private.gt_clean(r->>'curso',20,true);
     insert into public.gt_registrations(torneo_id,usuario_id,nombre,curso)
       values (p_torneo,auth.uid(),v_nombre,v_curso) on conflict do nothing;
     get diagnostics v_added = row_count; v_count := v_count+v_added;
@@ -214,21 +221,39 @@ revoke all on public.gt_profiles, public.gt_tournaments, public.gt_registrations
 grant select on public.gt_profiles, public.gt_tournaments, public.gt_registrations, public.gt_matches to authenticated;
 grant all on public.gt_profiles to service_role;
 drop policy if exists gt_profile_read on public.gt_profiles;
-create policy gt_profile_read on public.gt_profiles for select to authenticated using (id=auth.uid() and public.gt_role() is not null);
+create policy gt_profile_read on public.gt_profiles for select to authenticated using (id=(select auth.uid()) and (select gt_private.gt_role()) is not null);
 drop policy if exists gt_tournament_read on public.gt_tournaments;
-create policy gt_tournament_read on public.gt_tournaments for select to authenticated using (public.gt_role() is not null);
+create policy gt_tournament_read on public.gt_tournaments for select to authenticated using ((select gt_private.gt_role()) is not null);
 drop policy if exists gt_registration_read on public.gt_registrations;
-create policy gt_registration_read on public.gt_registrations for select to authenticated using (public.gt_role() is not null);
+create policy gt_registration_read on public.gt_registrations for select to authenticated using ((select gt_private.gt_role()) is not null);
 drop policy if exists gt_match_read on public.gt_matches;
-create policy gt_match_read on public.gt_matches for select to authenticated using (public.gt_role() is not null);
+create policy gt_match_read on public.gt_matches for select to authenticated using ((select gt_private.gt_role()) is not null);
 
 -- Ninguna función se expone a anon. Los auxiliares sólo pueden usarse internamente.
-revoke all on function public.gt_role(), public.gt_clean(text,integer,boolean), public.gt_lock(bigint,boolean),
-  public.gt_state(text), public.gt_register(bigint,text,text), public.gt_edit(bigint,bigint,text,text,boolean),
-  public.gt_bracket(bigint,bigint[]), public.gt_winner(bigint,bigint,bigint), public.gt_import(bigint,jsonb)
+revoke all on function gt_private.gt_role(), gt_private.gt_clean(text,integer,boolean), gt_private.gt_lock(bigint,boolean),
+  gt_private.gt_state(text), gt_private.gt_register(bigint,text,text), gt_private.gt_edit(bigint,bigint,text,text,boolean),
+  gt_private.gt_bracket(bigint,bigint[]), gt_private.gt_winner(bigint,bigint,bigint), gt_private.gt_import(bigint,jsonb)
   from public, anon, authenticated;
-grant execute on function public.gt_role(), public.gt_state(text), public.gt_register(bigint,text,text),
-  public.gt_edit(bigint,bigint,text,text,boolean), public.gt_bracket(bigint,bigint[]),
-  public.gt_winner(bigint,bigint,bigint), public.gt_import(bigint,jsonb) to authenticated;
+grant execute on function gt_private.gt_role(), gt_private.gt_state(text), gt_private.gt_register(bigint,text,text),
+  gt_private.gt_edit(bigint,bigint,text,text,boolean), gt_private.gt_bracket(bigint,bigint[]),
+  gt_private.gt_winner(bigint,bigint,bigint), gt_private.gt_import(bigint,jsonb) to authenticated;
+-- API pública sin privilegios elevados: las implementaciones privadas verifican
+-- identidad, perfil, sesión y permisos. El schema gt_private no se expone a REST.
+create or replace function public.gt_state(p_slug text default null) returns jsonb
+language sql stable security invoker set search_path = '' as $$ select gt_private.gt_state(p_slug) $$;
+create or replace function public.gt_register(p_torneo bigint, p_nombre text, p_curso text) returns bigint
+language sql security invoker set search_path = '' as $$ select gt_private.gt_register(p_torneo,p_nombre,p_curso) $$;
+create or replace function public.gt_edit(p_torneo bigint,p_id bigint,p_nombre text default null,p_curso text default null,p_delete boolean default false) returns void
+language sql security invoker set search_path = '' as $$ select gt_private.gt_edit(p_torneo,p_id,p_nombre,p_curso,p_delete) $$;
+create or replace function public.gt_bracket(p_torneo bigint,p_equipos bigint[]) returns void
+language sql security invoker set search_path = '' as $$ select gt_private.gt_bracket(p_torneo,p_equipos) $$;
+create or replace function public.gt_winner(p_torneo bigint,p_partido bigint,p_ganador bigint) returns void
+language sql security invoker set search_path = '' as $$ select gt_private.gt_winner(p_torneo,p_partido,p_ganador) $$;
+create or replace function public.gt_import(p_torneo bigint,p_rows jsonb) returns integer
+language sql security invoker set search_path = '' as $$ select gt_private.gt_import(p_torneo,p_rows) $$;
+revoke all on function public.gt_state(text),public.gt_register(bigint,text,text),public.gt_edit(bigint,bigint,text,text,boolean),
+ public.gt_bracket(bigint,bigint[]),public.gt_winner(bigint,bigint,bigint),public.gt_import(bigint,jsonb) from public,anon,authenticated;
+grant execute on function public.gt_state(text),public.gt_register(bigint,text,text),public.gt_edit(bigint,bigint,text,text,boolean),
+ public.gt_bracket(bigint,bigint[]),public.gt_winner(bigint,bigint,bigint),public.gt_import(bigint,jsonb) to authenticated;
 notify pgrst, 'reload schema';
 commit;
