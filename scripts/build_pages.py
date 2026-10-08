@@ -7,11 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'docs'
-SPORTS = {
-    'futbol': {'icon': 'football', 'color': 'green', 'label': 'Fútbol'},
-    'basketball': {'icon': 'basketball', 'color': 'orange', 'label': 'Básquetbol'},
-    'voleibol': {'icon': 'volleyball', 'color': 'purple', 'label': 'Voleibol'},
-}
+SPORTS = json.loads((ROOT / 'app/data/sports.json').read_text(encoding='utf-8'))
 PHASES = {'semifinal1': 'Semifinal 1', 'semifinal2': 'Semifinal 2', 'final': 'Final'}
 
 
@@ -42,7 +38,11 @@ def build():
     OUTPUT.mkdir(exist_ok=True)
     copytree(ROOT / 'app/static', OUTPUT / 'static', dirs_exist_ok=True)
     env = Environment(loader=FileSystemLoader(ROOT / 'app/templates'), autoescape=select_autoescape(['html']))
-    env.globals.update(sports=SPORTS, phases=PHASES, pages_preview=False, pages_live=True,
+    def sport_info(tournament):
+        info = dict(SPORTS.get(tournament['slug'], {'icon': 'trophy', 'color': 'purple', 'description': 'Una nueva competencia para tu comunidad.'}))
+        info.update(label=tournament['nombre'], individual=tournament.get('modalidad') == 'individual')
+        return info
+    env.globals.update(sports=SPORTS, phases=PHASES, sport_info=sport_info, nav_tournaments=[], pages_preview=False, pages_live=True,
                        supabase_url=public['url'], csrf_token=lambda: '', get_flashed_messages=lambda **kw: [])
     env.globals['url_for'] = lambda endpoint, **kw: static_url('estudiante', endpoint, **kw)
     for name in ('index.html', 'login.html'):
@@ -52,12 +52,15 @@ def build():
         env.globals['url_for'] = lambda endpoint, _role=role, **kw: static_url(_role, endpoint, **kw)
         tournaments = [{'id': index, 'slug': slug, 'nombre': sport['label'], 'equipos': 0, 'completados': 0}
                        for index, (slug, sport) in enumerate(SPORTS.items(), 1)]
+        for tournament in tournaments:
+            tournament['modalidad'] = 'individual' if SPORTS[tournament['slug']]['individual'] else 'equipo'
+        env.globals['nav_tournaments'] = tournaments
         html = env.get_template('dashboard.html').render(user=user, active='dashboard',
             tournaments=tournaments, recent=[], stats={'torneos': 0, 'equipos': 0, 'resultados': 0})
         (OUTPUT / f'dashboard-{role}.html').write_text(html, encoding='utf-8')
-        for tournament in tournaments:
+        for tournament in tournaments + [{'id': 0, 'slug': 'torneo', 'nombre': 'Torneo', 'modalidad': 'equipo'}]:
             html = env.get_template('tournament.html').render(user=user, active=tournament['slug'],
-                tournament=tournament, teams=[], matches=[])
+                tournament=tournament, teams=[], matches=[], rounds=[])
             (OUTPUT / f'{role}-{tournament["slug"]}.html').write_text(html, encoding='utf-8')
     # La confirmación real se muestra después de guardar; esta URL antigua vuelve al resumen.
     (OUTPUT / 'confirmacion.html').write_text('<!doctype html><html lang="es"><meta charset="utf-8"><title>Torneo</title><meta http-equiv="refresh" content="0;url=index.html"><a href="index.html">Continuar</a></html>', encoding='utf-8')

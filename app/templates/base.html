@@ -14,7 +14,7 @@
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
   {% if pages_live %}<script src="{{ url_for('static', filename='js/pages.bundle.js') }}" defer></script>{% endif %}
 </head>
-<body class="{% block body_class %}{% endblock %}" {% if pages_live %}data-pages-live data-role="{{ user.rol if user else '' }}" data-slug="{{ active if active in sports else '' }}"{% endif %}>
+<body class="{% block body_class %}{% endblock %}" {% if pages_live %}data-pages-live data-role="{{ user.rol if user else '' }}" data-slug="{{ tournament.slug if tournament is defined and tournament else '' }}"{% endif %}>
 <a class="skip-link" href="#main">Saltar al contenido</a>
 {% if user %}
 <button class="sidebar-overlay" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
@@ -22,10 +22,10 @@
   <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark">{{ icon('trophy') }}</span><span>torneo<span class="brand-dot">.</span><small>DEPORTE ESCOLAR</small></span></a>
   <button type="button" class="icon-button sidebar-close" aria-label="Cerrar menú">{{ icon('close') }}</button>
   <p class="nav-label">ESPACIO DE TRABAJO</p>
-  <nav>
+  <nav id="tournament-nav">
     <a class="nav-item {{ 'active' if active == 'dashboard' }}" {% if active == 'dashboard' %}aria-current="page"{% endif %} href="{{ url_for('main.dashboard') }}">{{ icon('dashboard') }} Resumen</a>
     <p class="nav-label">TORNEOS</p>
-    {% for slug, sport in sports.items() %}<a class="nav-item {{ 'active' if active == slug }}" {% if active == slug %}aria-current="page"{% endif %} href="{{ url_for('main.tournament', slug=slug) }}">{{ icon(sport.icon) }} {{ sport.label }}</a>{% endfor %}
+    {% for nav_tournament in nav_tournaments %}{% set slug = nav_tournament.slug %}{% set sport = sport_info(nav_tournament) %}<a class="nav-item {{ 'active' if active == slug }}" {% if active == slug %}aria-current="page"{% endif %} href="{{ url_for('main.tournament', slug=slug) }}">{{ icon(sport.icon) }} {{ sport.label }}</a>{% endfor %}
   </nav>
   <div class="sidebar-bottom"><div class="sidebar-note">{{ icon('trophy') }}<strong>El deporte nos conecta.</strong><p>Un espacio para competir,<br>compartir y crecer juntos.</p></div>
     <div class="sidebar-profile"><span class="avatar">{{ user.nombre[:1]|upper }}</span><div><strong>{{ user.nombre }}</strong><small>{{ user.rol|capitalize }}</small></div></div>
@@ -33,7 +33,7 @@
   </div>
 </aside>
 <div class="app-shell">
-  <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">{{ icon('menu') }}</button><span class="breadcrumb">Mi espacio <span>/</span> <strong>{{ sports[active].label if active in sports else 'Resumen' }}</strong></span></div><div class="topbar-profile"><span class="role-badge">{{ user.rol|capitalize }}</span><span class="avatar small">{{ user.nombre[:1]|upper }}</span><span class="profile-name">{{ user.nombre }}</span>{% if pages_preview %}<a class="icon-button" href="{{ url_for('auth.login') }}" aria-label="Volver a portada">{{ icon('logout') }}</a>{% else %}<form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}<button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión">{{ icon('logout') }}</button></form>{% endif %}</div></header>
+  <header class="topbar"><div class="topbar-start"><button class="icon-button menu-toggle" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">{{ icon('menu') }}</button><span class="breadcrumb">Mi espacio <span>/</span> <strong>{{ tournament.nombre if tournament is defined and tournament else 'Resumen' }}</strong></span></div><div class="topbar-profile"><span class="role-badge">{{ user.rol|capitalize }}</span><span class="avatar small">{{ user.nombre[:1]|upper }}</span><span class="profile-name">{{ user.nombre }}</span>{% if pages_preview %}<a class="icon-button" href="{{ url_for('auth.login') }}" aria-label="Volver a portada">{{ icon('logout') }}</a>{% else %}<form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}<button type="submit" class="icon-button" aria-label="Salir de mi cuenta" title="Cerrar sesión">{{ icon('logout') }}</button></form>{% endif %}</div></header>
   <main class="content" id="main" tabindex="-1">
 {% else %}<main id="main" tabindex="-1" class="public-main">{% endif %}
   <div class="toast-region" aria-live="polite" aria-atomic="true">

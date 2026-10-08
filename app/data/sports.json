@@ -1,0 +1,10 @@
+{
+  "futbol": {"icon": "football", "color": "green", "label": "Fútbol", "description": "La pasión se juega en equipo.", "individual": false},
+  "basketball": {"icon": "basketball", "color": "orange", "label": "Básquetbol", "description": "Cada punto cuenta. Cada equipo también.", "individual": false},
+  "voleibol": {"icon": "volleyball", "color": "purple", "label": "Voleibol", "description": "Conecta, juega y supera la red.", "individual": false},
+  "ajedrez": {"icon": "chess", "color": "purple", "label": "Ajedrez", "description": "Cada movimiento abre una nueva posibilidad.", "individual": true},
+  "tenis-mesa": {"icon": "paddle", "color": "orange", "label": "Tenis de mesa", "description": "Reflejos y precisión en cada intercambio.", "individual": true},
+  "tenis": {"icon": "racket", "color": "green", "label": "Tenis", "description": "Un punto a la vez, hasta la final.", "individual": true},
+  "badminton": {"icon": "shuttle", "color": "purple", "label": "Bádminton", "description": "Agilidad y estrategia sobre la red.", "individual": true},
+  "balonmano": {"icon": "handball", "color": "orange", "label": "Balonmano", "description": "Pases, velocidad y trabajo en equipo.", "individual": false}
+}

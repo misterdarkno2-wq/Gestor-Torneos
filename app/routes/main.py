@@ -1,4 +1,5 @@
 import json
+import re
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, session, url_for
 
@@ -9,7 +10,7 @@ bp = Blueprint('main', __name__)
 
 
 def tournament_or_404(slug):
-    if slug not in model.SPORTS:
+    if not re.fullmatch(r'[a-z][a-z0-9-]{1,59}', slug):
         abort(404)
     tournament = model.get_tournament(slug)
     if not tournament:
@@ -59,6 +60,7 @@ def tournament(slug):
     tournament = tournament_or_404(slug)
     return render_template('tournament.html', tournament=tournament,
                            teams=model.registrations(tournament['id']),
+                           rounds=model.bracket_rounds(model.matches(tournament['id'])),
                            matches=model.matches(tournament['id']), active=slug)
 
 
@@ -106,6 +108,8 @@ def bracket(slug):
     tournament = tournament_or_404(slug)
     try:
         ids = [int(value) for value in request.form.getlist('equipos')]
+        if request.form.get('tamano') and int(request.form['tamano']) != len(ids):
+            raise ValueError('La selección debe coincidir con el tamaño de las llaves.')
         model.create_bracket(tournament['id'], ids)
         flash('Llaves guardadas. Ya puedes registrar los ganadores.', 'success')
     except (ValueError, PermissionError) as exc:
@@ -120,10 +124,26 @@ def result(slug, match_id):
     try:
         winner = int(request.form.get('ganador', ''))
         model.save_winner(tournament['id'], match_id, winner)
-        flash('Resultado guardado. La final se actualizó automáticamente.', 'success')
+        flash('Resultado guardado. Las siguientes rondas se actualizaron automáticamente.', 'success')
     except (ValueError, PermissionError) as exc:
         report_error(exc)
     return return_tournament(slug, 'llaves')
+
+
+@bp.post('/torneos/administrar')
+@professor_required
+def manage_tournament():
+    try:
+        slug = request.form.get('slug', '')
+        model.manage_tournament(request.form.get('nombre', ''), slug,
+            request.form.get('modalidad', 'equipo'), request.form.get('fecha_limite') or None,
+            request.form.get('abiertas') == 'on',
+            int(request.form['torneo_id']) if request.form.get('torneo_id') else None)
+        flash('Torneo guardado.', 'success')
+        return return_tournament(slug)
+    except (ValueError, PermissionError) as exc:
+        report_error(exc)
+        return redirect(url_for('main.dashboard'))
 
 
 @bp.post('/torneos/<slug>/importar')

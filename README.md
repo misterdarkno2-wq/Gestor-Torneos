@@ -1,17 +1,17 @@
 # Torneo · Gestor de Torneos Internos
 
-Gestión de fútbol, básquetbol y voleibol con **Supabase Auth y PostgreSQL**, interfaz responsive y roles de profesor/estudiante. Hay dos entradas a los mismos datos: el cliente de **GitHub Pages** y la aplicación **Python/Flask**. PyMySQL ya no es una dependencia.
+Gestión de ocho disciplinas, incluidos fútbol, básquetbol, voleibol y ajedrez con **Supabase Auth y PostgreSQL**, interfaz responsive y roles de profesor/estudiante. Hay dos entradas a los mismos datos: el cliente de **GitHub Pages** y la aplicación **Python/Flask**. PyMySQL ya no es una dependencia.
 
 Sitio: [Gestor de Torneos](https://misterdarkno2-wq.github.io/Gestor-Torneos/).
 
 ## Estado de Supabase y alta de cuentas
 
-La URL y clave publicable del proyecto están en `supabase/public-config.json`. **Las dos migraciones ya están aplicadas en el proyecto remoto**, con los tres deportes y el primer perfil de profesor activo. Su correo está confirmado en Supabase Auth. Abre el sitio e ingresa con el correo y la contraseña que configuraste en Supabase.
+La URL y clave publicable del proyecto están en `supabase/public-config.json`. **Las tres migraciones ya están aplicadas en el proyecto remoto**, con ocho disciplinas y el primer perfil de profesor activo. Su correo está confirmado en Supabase Auth. Abre el sitio e ingresa con el correo y la contraseña que configuraste en Supabase.
 
 Para configurar otro proyecto desde cero:
 
 1. Abre el [SQL Editor de tu proyecto](https://supabase.com/dashboard/project/mbpbukoqmsgzyilhnfay/sql/new).
-2. Aplica los archivos completos, en orden: `supabase/migrations/20261008023417_init_torneos_supabase.sql` y `supabase/migrations/20261008023738_provision_invited_profiles.sql`. El primero crea tablas `gt_*`, tres deportes, funciones transaccionales y políticas RLS; conserva datos existentes. El segundo añade el alta de perfiles previamente autorizados cuando Auth confirma el correo. No repitas la segunda migración si ya está aplicada.
+2. Aplica los archivos completos, en orden: `supabase/migrations/20261008023417_init_torneos_supabase.sql`, `supabase/migrations/20261008023738_provision_invited_profiles.sql` y `supabase/migrations/20261008030107_expand_sports_brackets.sql`. El primero crea tablas `gt_*`, tres deportes, funciones transaccionales y políticas RLS; conserva datos existentes. El segundo añade el alta de perfiles previamente autorizados cuando Auth confirma el correo. La tercera añade disciplinas, rondas, administración de torneos y plazos. No repitas la segunda ni la tercera si ya están aplicadas.
 3. En **Authentication → Users → Add user**, crea la cuenta de acceso con correo y contraseña. Confirma el correo por el procedimiento del panel o por el mensaje de verificación; no compartas la contraseña en el repositorio.
 4. En `supabase/alta-perfil.sql`, reemplaza correo y nombre, y usa rol `profesor` para el administrador o `estudiante` para el alumno. Ejecuta ese archivo para asociar la cuenta a Torneo. Si no se inserta ninguna fila, revisa el correo. Una cuenta Auth sin perfil activo no accede a esta aplicación.
 5. Abre el sitio e ingresa con **correo y contraseña**. Los antiguos usuarios/contraseñas hardcoded no crean cuentas de Supabase. El rol se obtiene del perfil protegido, nunca de `user_metadata` ni de la URL.
@@ -86,7 +86,10 @@ Los paneles requieren sesión y redirigen al rol real de la cuenta. Los datos de
 
 - Todos los miembros activos pueden ver torneos y equipos e inscribir los suyos.
 - El estudiante modifica/elimina sólo sus inscripciones. El profesor administra las de la comunidad y publica llaves/resultados.
-- Cada llave usa cuatro equipos del mismo deporte, con dos semifinales y una final. El ganador debe participar en el encuentro. Cambiar una semifinal actualiza los finalistas y borra el resultado anterior de la final.
+- El profesor puede crear torneos, editar su nombre y modalidad, inscribir participantes, fijar una fecha límite y abrir/cerrar inscripciones. El identificador del enlace se conserva al editar. La fecha incluye todo el día en horario de Chile; el servidor rechaza nuevas inscripciones e importaciones después del plazo, aunque se manipule el navegador.
+- Hay ocho disciplinas iniciales: fútbol, básquetbol, voleibol, ajedrez, tenis de mesa, tenis, bádminton y balonmano. El profesor puede crear otras competencias desde el panel sin publicar nuevos archivos HTML.
+- Las llaves admiten exactamente 4, 8, 16 o 32 participantes distintos del mismo torneo: 3, 7, 15 o 31 partidos respectivamente. Son de eliminación directa, también para ajedrez; no implementan sistema suizo ni ligas. Los cruces iniciales siguen el orden de la lista (1 vs 2, 3 vs 4...). Los ganadores avanzan automáticamente hasta la final. Corregir un resultado invalida sólo sus partidos dependientes; las otras ramas conservan sus resultados.
+- Para organizar llaves, abre el torneo, elige el tamaño y marca esa cantidad exacta de participantes. Las opciones que necesitan más inscripciones aparecen desactivadas. Reorganizar requiere confirmación porque sustituye partidos y resultados de ese torneo.
 - Un equipo que aparece en una llave no se elimina hasta reorganizarla. Los nombres y cursos se validan; los duplicados se comparan sin distinguir mayúsculas.
 - Importar JSON es atómico, admite hasta 100 filas y 128 KB y omite duplicados. Mantiene la función para recuperar inscripciones del sistema anterior.
 

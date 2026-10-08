@@ -119,3 +119,17 @@ def test_headers_and_missing_paths(client):
     assert response.headers['X-Frame-Options'] == 'DENY'
     assert response.headers['Cache-Control'] == 'no-store'
     assert client.get('/no-existe').status_code == 404
+
+
+def test_professor_can_create_tournament_and_student_is_blocked(signed_client, monkeypatch):
+    manage=Mock(return_value=10)
+    monkeypatch.setattr(torneo,'manage_tournament',manage)
+    token=csrf_token(signed_client,'/dashboard')
+    form={'csrf_token':token,'nombre':'Ajedrez Primavera','slug':'ajedrez-primavera',
+          'modalidad':'individual','fecha_limite':'2026-12-31','abiertas':'on'}
+    response=signed_client.post('/torneos/administrar',data=form)
+    assert response.status_code==302 and '/torneos/ajedrez-primavera' in response.location
+    manage.assert_called_once_with('Ajedrez Primavera','ajedrez-primavera','individual','2026-12-31',True,None)
+    monkeypatch.setattr('app.security.session_user',lambda token:STUDENT.copy())
+    assert signed_client.post('/torneos/administrar',data=form).status_code==403
+    assert manage.call_count==1

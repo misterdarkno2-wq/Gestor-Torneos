@@ -21,7 +21,8 @@ def create_app(test_config=None):
         raise RuntimeError('SUPABASE_URL debe ser la URL HTTPS del proyecto, sin rutas ni credenciales.')
 
     from app.cli import register_cli
-    from app.models.torneo import PHASES, SPORTS
+    from app.models.torneo import PHASES, SPORTS, sport_info
+    from app.models import torneo as tournament_model
     from app.routes.auth import bp as auth
     from app.routes.main import bp as main
     from app.security import csrf, load_user
@@ -34,7 +35,9 @@ def create_app(test_config=None):
 
     @app.context_processor
     def common_context():
-        return {'user': getattr(g, 'user', None), 'sports': SPORTS, 'phases': PHASES}
+        user = getattr(g, 'user', None)
+        return {'user': user, 'sports': SPORTS, 'phases': PHASES, 'sport_info': sport_info,
+                'nav_tournaments': tournament_model.list_tournaments() if user else []}
 
     @app.after_request
     def security_headers(response):

@@ -39,6 +39,7 @@ def pages_url():
 class SupabaseMock:
     def __init__(self, role='profesor'):
         self.role, self.calls = role, []
+        self.tournaments = copy.deepcopy(TOURNAMENTS)
         self.teams = copy.deepcopy(TEAMS)
         for t in self.teams:
             t['usuario_id'] = UID if t['id']==1 else OTHER
@@ -69,11 +70,11 @@ class SupabaseMock:
         elif path == '/rest/v1/rpc/gt_state':
             if self.fail_state: status,data=404,{'code':'PGRST202','message':'missing function'}
             elif payload.get('p_slug'):
-                t=next(t for t in TOURNAMENTS if t['slug']==payload['p_slug'])
-                data={'user':profile,'tournament':t,'teams':self.teams if t['id']==1 else [],'matches':self.matches if t['id']==1 else []}
+                t=next(t for t in self.tournaments if t['slug']==payload['p_slug'])
+                data={'user':profile,'tournament':t,'teams':[team for team in self.teams if team['torneo_id']==t['id']],'matches':self.matches if t['id']==1 or t['id']==getattr(self,'bracket_tournament',None) else []}
             else:
                 recent=[dict(t,deporte='Fútbol',slug='futbol') for t in self.teams if self.role=='profesor' or t['usuario_id']==UID]
-                data={'user':profile,'tournaments':TOURNAMENTS,'recent':recent}
+                data={'user':profile,'tournaments':self.tournaments,'recent':recent}
         elif path.endswith('/gt_register'):
             data=100
             self.teams.append({'id':100,'torneo_id':1,'usuario_id':UID,'nombre':payload['p_nombre'],'curso':payload['p_curso'],'created_at':'2026-10-07T12:00:00Z'})
@@ -81,8 +82,29 @@ class SupabaseMock:
             if payload['p_delete']: self.teams=[t for t in self.teams if t['id']!=payload['p_id']]
             else:
                 t=next(t for t in self.teams if t['id']==payload['p_id']); t.update(nombre=payload['p_nombre'],curso=payload['p_curso'])
-        elif path.endswith('/gt_import'): data=1
-        elif path.endswith('/gt_bracket') or path.endswith('/gt_winner'): pass
+        elif path.endswith('/gt_manage_tournament'):
+            if payload['p_id']:
+                t=next(t for t in self.tournaments if t['id']==payload['p_id'])
+            else:
+                t={'id':10,'equipos':0,'completados':0,'partidos':0}; self.tournaments.append(t)
+            t.update(nombre=payload['p_nombre'],slug=payload['p_slug'],modalidad=payload['p_modalidad'],fecha_limite=payload['p_fecha_limite'],inscripciones_abiertas=payload['p_abiertas'])
+            data=t['id']
+        elif path.endswith('/gt_import'):
+            data=len(payload['p_rows'])
+            for row in payload['p_rows']:
+                self.teams.append({'id':max(t['id'] for t in self.teams)+1,'torneo_id':payload['p_torneo'],'usuario_id':UID,**row,'created_at':'2026-10-07T12:00:00Z'})
+        elif path.endswith('/gt_bracket'):
+            # API simulada; las reglas reales se comprueban en PostgreSQL.
+            ids=payload['p_equipos']; size=len(ids); total=size.bit_length()-1
+            self.bracket_tournament=payload['p_torneo']; self.matches=[]
+            names={t['id']:t['nombre'] for t in self.teams}
+            for r in range(1,total+1):
+                for pos in range(1,size//(2**r)+1):
+                    a,b=(ids[pos*2-2],ids[pos*2-1]) if r==1 else (None,None)
+                    phase='final' if r==total else f'semifinal{pos}' if r==total-1 else f'ronda{r}_{pos}'
+                    self.matches.append({'id':len(self.matches)+1,'ronda':r,'posicion':pos,'fase':phase,'equipo_a_id':a,'equipo_b_id':b,'equipo_a':names.get(a),'equipo_b':names.get(b),'ganador_id':None,'ganador':None})
+            t=next(t for t in self.tournaments if t['id']==payload['p_torneo']);t['partidos']=size-1
+        elif path.endswith('/gt_winner'): pass
         else: raise AssertionError('Solicitud no simulada: '+path)
         route.fulfill(status=status,content_type='application/json',headers=headers,body=json.dumps(data))
 
@@ -182,7 +204,7 @@ def test_bracket_winner_and_import_rpc_contract(browser,pages_url):
     page.locator('#winner-1').select_option('2')
     page.locator('.result-form').first.get_by_role('button',name='Guardar resultado').click()
     page.get_by_role('button',name='Confirmar',exact=True).click()
-    page.get_by_text('Resultado guardado. La final se actualizó automáticamente.').wait_for()
+    page.get_by_text('Resultado guardado. Las siguientes rondas se actualizaron automáticamente.').wait_for()
     page.locator('.bracket-settings summary').click()
     page.get_by_role('button',name='Guardar llaves').click()
     assert not any(c[0].endswith('/gt_bracket') for c in fake.calls)
@@ -197,4 +219,46 @@ def test_bracket_winner_and_import_rpc_contract(browser,pages_url):
     bracket=next(payload for path,payload in fake.calls if path.endswith('/gt_bracket'))
     assert winner=={'p_torneo':1,'p_partido':1,'p_ganador':2}
     assert bracket=={'p_torneo':1,'p_equipos':[1,2,3,4]}
+    context.close()
+
+
+@pytest.mark.parametrize('width',[320,1440])
+def test_custom_tournament_admin_deadline_and_32_bracket(browser,pages_url,width):
+    fake=SupabaseMock(); context=setup(browser,fake,viewport={'width':width,'height':900}); page=context.new_page()
+    sports=json.loads(Path('app/data/sports.json').read_text(encoding='utf-8'))
+    fake.tournaments=[{'id':i,'slug':slug,'nombre':sport['label'],'modalidad':'individual' if sport['individual'] else 'equipo',
+        'equipos':0,'completados':0,'partidos':0} for i,(slug,sport) in enumerate(sports.items(),1)]
+    errors=[]; page.on('pageerror',lambda e:errors.append(str(e)))
+    login(page,pages_url); page.wait_for_url('**/dashboard-profesor.html')
+    expect(page.locator('.tournament-card')).to_have_count(8)
+    page.locator('#tournament-name').fill('Ajedrez Primavera')
+    expect(page.locator('#tournament-slug')).to_have_value('ajedrez-primavera')
+    page.locator('#tournament-mode').select_option('individual')
+    page.locator('#tournament-deadline').fill('2100-01-01')
+    page.get_by_role('button',name='Crear torneo',exact=True).click()
+    page.wait_for_url('**/profesor-torneo.html?torneo=ajedrez-primavera')
+    expect(page.get_by_role('heading',name='Ajedrez Primavera',exact=True)).to_be_visible()
+    expect(page.get_by_role('heading',name='Inscribe un participante',exact=True)).to_be_visible()
+    page.locator('.import-details summary').click()
+    rows=[{'nombre':f'Jugador {i+1}','curso':'3 A'} for i in range(32)]
+    page.locator('#archivo').set_input_files({'name':'jugadores.json','mimeType':'application/json','buffer':json.dumps(rows).encode()})
+    page.get_by_role('button',name='Importar inscripciones').click()
+    page.get_by_text('Se importaron 32 inscripciones. Los duplicados se omitieron.').wait_for()
+    page.locator('#bracket-size').select_option('32')
+    for box in page.locator('input[name=equipos]').all(): box.check()
+    expect(page.locator('.selection-count')).to_have_text('32 de 32 participantes seleccionados')
+    page.get_by_role('button',name='Guardar llaves',exact=True).click()
+    expect(page.locator('.match-card')).to_have_count(31)
+    expect(page.locator('.bracket-round')).to_have_count(5)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    page.locator('#llaves').scroll_into_view_if_needed()
+    page.screenshot(path=f'test-results/bracket-32-{width}.png',animations='disabled')
+    page.locator('.tournament-admin summary').click()
+    page.locator('#tournament-deadline').fill('2000-01-01')
+    page.get_by_role('button',name='Guardar torneo',exact=True).click()
+    expect(page.locator('#nombre')).to_be_disabled()
+    expect(page.locator('.import-details button[type=submit]')).to_be_disabled()
+    assert errors==[]
+    create=next(payload for path,payload in fake.calls if path.endswith('/gt_manage_tournament'))
+    assert create['p_id'] is None and create['p_fecha_limite']=='2100-01-01' and create['p_modalidad']=='individual'
     context.close()

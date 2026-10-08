@@ -1,14 +1,13 @@
 """Adaptador compatible con Flask; reglas transaccionales en PostgreSQL."""
-from datetime import datetime
+from datetime import datetime, date
+import json
+import re
+from pathlib import Path
 from flask import g
 from app.database.connection import rpc
 from app.validation import clean_text
 
-SPORTS = {
-    'futbol': {'icon': 'football', 'color': 'green', 'label': 'Fútbol'},
-    'basketball': {'icon': 'basketball', 'color': 'orange', 'label': 'Básquetbol'},
-    'voleibol': {'icon': 'volleyball', 'color': 'purple', 'label': 'Voleibol'},
-}
+SPORTS = json.loads((Path(__file__).resolve().parents[1] / 'data/sports.json').read_text(encoding='utf-8'))
 PHASES = {'semifinal1': 'Semifinal 1', 'semifinal2': 'Semifinal 2', 'final': 'Final'}
 
 
@@ -26,7 +25,15 @@ def list_tournaments():
 
 
 def get_tournament(slug):
-    return state(slug)['tournament'] if slug in SPORTS else None
+    return state(slug)['tournament'] if any(t['slug'] == slug for t in list_tournaments()) else None
+
+
+def sport_info(tournament):
+    info = dict(SPORTS.get(tournament['slug'], {'icon': 'trophy', 'color': 'purple',
+                'description': 'Una nueva competencia para tu comunidad.'}))
+    info['label'] = tournament['nombre']
+    info['individual'] = tournament.get('modalidad', 'individual' if info.get('individual') else 'equipo') == 'individual'
+    return info
 
 
 def tournament_slug(tournament_id):
@@ -45,7 +52,20 @@ def recent_registrations(user):
 
 
 def matches(tournament_id):
-    return sorted(state(tournament_slug(tournament_id))['matches'], key=lambda row: list(PHASES).index(row['fase']))
+    rows = state(tournament_slug(tournament_id))['matches']
+    return sorted(rows, key=lambda row: (row.get('ronda', 2 if row['fase'] == 'final' else 1),
+                                        row.get('posicion', 2 if row['fase'] == 'semifinal2' else 1)))
+
+
+def bracket_rounds(rows):
+    rounds = {}
+    for row in rows:
+        number = row.get('ronda', 2 if row['fase'] == 'final' else 1)
+        rounds.setdefault(number, []).append(row)
+    last = max(rounds, default=0)
+    titles = {0: 'Final', 1: 'Semifinales', 2: 'Cuartos de final', 3: 'Octavos de final', 4: 'Dieciseisavos de final'}
+    return [{'number': n, 'title': titles[last-n], 'matches': sorted(items, key=lambda m: m.get('posicion', 2 if m['fase'] == 'semifinal2' else 1))}
+            for n, items in sorted(rounds.items())]
 
 
 def register(tournament_id, user_id, nombre, curso):
@@ -60,13 +80,26 @@ def edit_registration(tournament_id, registration_id, user, nombre=None, curso=N
 
 
 def create_bracket(tournament_id, team_ids):
-    if len(team_ids) != 4 or len(set(team_ids)) != 4:
-        raise ValueError('Selecciona cuatro equipos distintos para las semifinales.')
+    if len(team_ids) not in (4, 8, 16, 32) or len(set(team_ids)) != len(team_ids):
+        raise ValueError('Selecciona 4, 8, 16 o 32 participantes distintos para las llaves.')
     return rpc('gt_bracket', p_torneo=tournament_id, p_equipos=team_ids)
 
 
 def save_winner(tournament_id, match_id, winner_id):
     return rpc('gt_winner', p_torneo=tournament_id, p_partido=match_id, p_ganador=winner_id)
+
+
+def manage_tournament(nombre, slug, modalidad, fecha_limite=None, abiertas=True, tournament_id=None):
+    if not re.fullmatch(r'[a-z][a-z0-9-]{1,59}', slug) or modalidad not in ('equipo', 'individual'):
+        raise ValueError('Revisa el identificador y la modalidad del torneo.')
+    if fecha_limite:
+        try:
+            date.fromisoformat(fecha_limite)
+        except ValueError:
+            raise ValueError('La fecha límite debe ser una fecha válida.') from None
+    return rpc('gt_manage_tournament', p_nombre=clean_text(nombre, 'Nombre del torneo', 80),
+               p_slug=slug, p_modalidad=modalidad, p_fecha_limite=fecha_limite or None,
+               p_abiertas=abiertas, p_id=tournament_id)
 
 
 def import_registrations(tournament_id, user_id, rows):

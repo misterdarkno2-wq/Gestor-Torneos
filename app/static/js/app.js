@@ -86,9 +86,10 @@ document.addEventListener('submit', event => {
     if (event.defaultPrevented) return;
     if (form.classList.contains('loading')) { event.preventDefault(); return; }
     const teams = [...form.querySelectorAll('input[name=equipos]')];
-    if (teams.length && teams.filter(input => input.checked).length !== 4) {
+    const size = Number(form.querySelector('[name=tamano]')?.value || 4);
+    if (teams.length && teams.filter(input => input.checked).length !== size) {
       event.preventDefault();
-      teams[0].setCustomValidity('Selecciona exactamente cuatro equipos.');
+      teams[0].setCustomValidity(`Selecciona exactamente ${size} participantes.`);
       teams[0].reportValidity();
       return;
     }
@@ -107,7 +108,22 @@ document.addEventListener('submit', event => {
     setTimeout(() => form.querySelectorAll('button[type=submit]').forEach(button => { button.disabled = true; }), 0);
  });
 document.addEventListener('change', event => {
-  if (event.target.matches('input[name=equipos]')) event.target.form.querySelector('input[name=equipos]').setCustomValidity('');
+  if (event.target.matches('input[name=equipos], select[name=tamano]')) {
+    const form = event.target.form;
+    const boxes = [...form.querySelectorAll('input[name=equipos]')];
+    boxes[0]?.setCustomValidity('');
+    const selected = boxes.filter(input => input.checked).length;
+    const size = Number(form.querySelector('[name=tamano]').value);
+    form.querySelector('.selection-count').textContent = `${selected} de ${size} participantes seleccionados`;
+  }
+});
+document.addEventListener('input', event => {
+  if (event.target.id !== 'tournament-name') return;
+  const slug = event.target.form.querySelector('[name=slug]');
+  if (!slug.readOnly && !slug.dataset.edited) slug.value = normalize(event.target.value).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+});
+document.addEventListener('input', event => {
+  if (event.target.id === 'tournament-slug') event.target.dataset.edited = 'true';
 });
 window.addEventListener('pageshow', () => {
   document.querySelectorAll('form.loading').forEach(form => {

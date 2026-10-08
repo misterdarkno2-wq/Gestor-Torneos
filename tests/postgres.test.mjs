@@ -134,3 +134,78 @@ test('Alta de perfiles sólo por invitación administrativa y correo verificado'
   await rejects(()=>db.query('select * from gt_private.gt_invited_profiles'),'42501');
   await rejects(()=>db.query("insert into gt_private.gt_invited_profiles values ('intruder@example.test','Intruso','profesor')"),'42501');
 });
+
+let expandedTournament, expandedTeams;
+test('Ampliación conserva inscripciones, llaves y resultados anteriores y añade deportes', async () => {
+  await db.exec('reset role');
+  const before = (await db.query('select id,torneo_id,fase,equipo_a_id,equipo_b_id,ganador_id from public.gt_matches order by id')).rows;
+  const { readdir } = await import('node:fs/promises');
+  const names = await readdir(new URL('../supabase/migrations/',import.meta.url));
+  await db.exec(await readFile(new URL('../supabase/migrations/'+names.find(n=>n.endsWith('_expand_sports_brackets.sql')),import.meta.url),'utf8'));
+  assert.deepEqual((await db.query('select id,torneo_id,fase,equipo_a_id,equipo_b_id,ganador_id from public.gt_matches order by id')).rows,before);
+  assert.equal((await db.query('select count(*)::int n from public.gt_tournaments')).rows[0].n,8);
+  await identity(professor);
+  expandedTournament = await call('gt_manage_tournament',['Ajedrez Primavera','ajedrez-primavera','individual',null,true,null]);
+  await call('gt_import',[expandedTournament,Array.from({length:32},(_,i)=>({nombre:`Jugador ${i+1}`,curso:'3 A'}))]);
+  expandedTeams = (await call('gt_state',['ajedrez-primavera'])).teams.map(t=>t.id);
+});
+for (const size of [4,8,16,32]) test(`Llaves de ${size}: rondas completas y avance automático hasta campeón`, async () => {
+  await identity(professor);
+  await call('gt_bracket',[expandedTournament,expandedTeams.slice(0,size)]);
+  let state = await call('gt_state',['ajedrez-primavera']);
+  assert.equal(state.matches.length,size-1);
+  assert.equal(Math.max(...state.matches.map(m=>m.ronda)),Math.log2(size));
+  for(let r=1;r<=Math.log2(size);r++) {
+    state=await call('gt_state',['ajedrez-primavera']);
+    for (const m of state.matches.filter(m=>m.ronda===r)) {
+      assert.ok(m.equipo_a_id && m.equipo_b_id);
+      await call('gt_winner',[expandedTournament,m.id,m.equipo_a_id]);
+    }
+  }
+  const resolved=await call('gt_state',['ajedrez-primavera']);
+  assert.equal(resolved.matches.filter(m=>m.ganador_id).length,size-1);
+  assert.equal(resolved.matches.find(m=>m.fase==='final').ganador_id,expandedTeams[0]);
+});
+test('Corrección invalida todos los ancestros y conserva la otra rama; mismo ganador no cambia nada', async () => {
+  await identity(professor);
+  const before=await call('gt_state',['ajedrez-primavera']);
+  const first=before.matches.find(m=>m.ronda===1 && m.posicion===1);
+  await call('gt_winner',[expandedTournament,first.id,first.ganador_id]);
+  assert.deepEqual((await call('gt_state',['ajedrez-primavera'])).matches,before.matches);
+  await call('gt_winner',[expandedTournament,first.id,first.equipo_b_id]);
+  const after=await call('gt_state',['ajedrez-primavera']);
+  for (const m of after.matches) {
+    const prev=before.matches.find(p=>p.id===m.id);
+    if(m.ronda>1 && m.posicion===1) assert.equal(m.ganador_id,null);
+    else if(m.id!==first.id) assert.deepEqual(m,prev);
+  }
+  assert.equal(after.matches.find(m=>m.ronda===2&&m.posicion===1).equipo_a_id,first.equipo_b_id);
+  assert.equal(after.matches.find(m=>m.ronda===3&&m.posicion===1).equipo_a_id,null);
+});
+test('Tamaños inválidos, duplicados y participantes ajenos no destruyen una llave existente', async () => {
+  const before=(await call('gt_state',['ajedrez-primavera'])).matches;
+  for(const ids of [expandedTeams.slice(0,6),[...expandedTeams.slice(0,3),expandedTeams[0]],null,[...expandedTeams.slice(0,3),teams[0]]]) {
+    await rejects(()=>call('gt_bracket',[expandedTournament,ids]),'PT400');
+    assert.deepEqual((await call('gt_state',['ajedrez-primavera'])).matches,before);
+  }
+});
+test('Sólo profesor administra torneos; cierre y fechas se aplican a registro e importación', async () => {
+  await db.exec('reset role');
+  await db.query('insert into auth.sessions(id,user_id) values($1,$1)',[student]);
+  await identity(student);
+  await rejects(()=>call('gt_manage_tournament',['Intruso','torneo-intruso','equipo',null,true,null]),'PT403');
+  await rejects(()=>call('gt_bracket',[expandedTournament,expandedTeams.slice(0,8)]),'PT403');
+  await identity(professor);
+  await call('gt_manage_tournament',['Ajedrez Primavera','ajedrez-primavera','individual','2000-01-01',true,expandedTournament]);
+  assert.equal((await call('gt_state',['ajedrez-primavera'])).tournament.inscripciones_disponibles,false);
+  await rejects(()=>call('gt_register',[expandedTournament,'Fuera de Plazo','3 A']),'PT400');
+  await rejects(()=>call('gt_import',[expandedTournament,[{nombre:'Fuera de Plazo',curso:'3 A'}]]),'PT400');
+  const today=(await db.query("select (now() at time zone 'America/Santiago')::date::text d")).rows[0].d;
+  await call('gt_manage_tournament',['Ajedrez Primavera','ajedrez-primavera','individual',today,true,expandedTournament]);
+  await call('gt_register',[expandedTournament,'En Plazo','3 A']);
+  await call('gt_manage_tournament',['Ajedrez Primavera','ajedrez-primavera','individual',null,false,expandedTournament]);
+  await rejects(()=>call('gt_register',[expandedTournament,'Cerrado','3 A']),'PT400');
+  await rejects(()=>call('gt_manage_tournament',['Ajedrez Primavera','otro-slug','individual',null,true,expandedTournament]),'PT400');
+  await identity(null,'anon');
+  await rejects(()=>call('gt_manage_tournament',['Intruso','intruso','equipo',null,true,null]),'42501');
+});

@@ -1,0 +1,20 @@
+{% from 'macros.html' import csrf_field %}
+<details class="panel tournament-admin" {% if not tournament %}open{% endif %}>
+  <summary>{{ 'Administrar torneo' if tournament else 'Crear un torneo' }}</summary>
+  <p class="muted">Define la modalidad y el plazo. La fecha límite incluye todo ese día en horario de Chile.</p>
+  <form class="form-stack tournament-admin-form" method="post" action="{{ url_for('main.manage_tournament') }}" data-operation="manage">
+    {{ csrf_field() }}
+    <input type="hidden" name="torneo_id" value="{{ tournament.id if tournament else '' }}">
+    <label for="tournament-name">Nombre del torneo</label>
+    <input id="tournament-name" name="nombre" value="{{ tournament.nombre if tournament else '' }}" minlength="2" maxlength="80" placeholder="Ej. Ajedrez primavera" required>
+    <label for="tournament-slug">Identificador del enlace</label>
+    <input id="tournament-slug" name="slug" value="{{ tournament.slug if tournament else '' }}" pattern="[a-z][a-z0-9-]{1,59}" maxlength="60" placeholder="Ej. ajedrez-primavera" required {{ 'readonly' if tournament }}>
+    <small class="muted">Letras minúsculas, números y guiones. Se conserva después de crear el torneo.</small>
+    <label for="tournament-mode">Modalidad</label>
+    <select id="tournament-mode" name="modalidad"><option value="equipo">Equipos</option><option value="individual" {{ 'selected' if tournament and tournament.modalidad == 'individual' }}>Participantes individuales</option></select>
+    <label for="tournament-deadline">Inscripciones hasta (opcional)</label>
+    <input id="tournament-deadline" type="date" name="fecha_limite" value="{{ tournament.fecha_limite or '' if tournament else '' }}">
+    <label class="checkbox-label"><input type="checkbox" name="abiertas" {{ 'checked' if not tournament or tournament.inscripciones_abiertas is not defined or tournament.inscripciones_abiertas }}> Inscripciones abiertas</label>
+    <button class="button primary" type="submit">{{ 'Guardar torneo' if tournament else 'Crear torneo' }}</button>
+  </form>
+</details>

@@ -20,6 +20,10 @@
 {% elif name == 'football' %}<circle cx="12" cy="12" r="9"/><path d="m12 8 4 3-2 5h-4l-2-5zM12 8V3m4 8 5-2m-7 7 3 4m-7-4-3 4m1-9L3 9"/>
 {% elif name == 'basketball' %}<circle cx="12" cy="12" r="9"/><path d="m6 5 13 13M3 12h18M12 3v18M5 6c6 0 13 7 13 13"/>
 {% elif name == 'volleyball' %}<circle cx="12" cy="12" r="9"/><path d="m12 12 8-4m-8 4-1 9m1-9L5 6m7-3c-1 3-1 6 0 9m8 6c-3-2-6-4-8-6M3 14c3 0 6-1 9-2"/>
+{% elif name == 'chess' %}<path d="M5 21h14v-3H5zM8 18l1-8h6l1 8M8 7h8v3H8zM12 2v5M10 4h4"/>
+{% elif name in ('paddle','racket') %}<ellipse cx="14" cy="8" rx="6" ry="7" transform="rotate(35 14 8)"/><path d="m10 13-6 8-3-2 6-8"/>{% if name == 'racket' %}<path d="m11 4 8 6m-9-2 7 5m-4-11-4 8m7-6-4 8"/>{% else %}<circle cx="20" cy="18" r="2"/>{% endif %}
+{% elif name == 'shuttle' %}<path d="m5 3 3 13h8l3-13-7 3zM8 16a4 4 0 0 0 8 0M9 5l1 11m5-11-1 11"/>
+{% elif name == 'handball' %}<circle cx="15" cy="6" r="3"/><path d="m4 14 4-3h7l4 4-3 6H8l-4-5zM8 11V7m3 4V8m-6 6H2m9 2h5"/>
 {% endif %}</svg>
 {%- endmacro %}
 
@@ -30,6 +34,9 @@
 <rect x="24" y="22" width="312" height="136" rx="3"/><path d="M180 22v136"/>
 {% if slug == 'futbol' %}<circle cx="180" cy="90" r="28"/><rect x="24" y="50" width="45" height="80"/><rect x="291" y="50" width="45" height="80"/><rect x="24" y="72" width="15" height="36"/><rect x="321" y="72" width="15" height="36"/>
 {% elif slug == 'basketball' %}<circle cx="180" cy="90" r="25"/><path d="M24 42a58 58 0 0 1 0 96m312-96a58 58 0 0 0 0 96"/><rect x="24" y="67" width="50" height="46"/><rect x="286" y="67" width="50" height="46"/><circle cx="74" cy="90" r="20"/><circle cx="286" cy="90" r="20"/>
+{% elif slug == 'ajedrez' %}{% for i in range(1,8) %}<path d="M{{ 24+i*39 }} 22v136M24 {{ 22+i*17 }}h312"/>{% endfor %}
+{% elif slug in ('tenis','tenis-mesa','badminton') %}<path d="M24 45h312M24 135h312M102 45v90m156-90v90M102 90h156"/>
+{% elif slug == 'balonmano' %}<path d="M24 45c100 0 100 90 0 90m312-90c-100 0-100 90 0 90"/><circle cx="180" cy="90" r="20"/>
 {% else %}<path d="M118 22v136m124-136v136M174 17v146m12-146v146"/>{% endif %}
 </svg>
 {% endmacro %}
